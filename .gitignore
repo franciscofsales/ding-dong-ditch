@@ -1,7 +1,7 @@
 node_modules/
 dist/
-config/
-recordings/
+/config/
+/recordings/
 .env
 *.mp4
 clips/

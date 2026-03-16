@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DingDong</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <h1>DingDong</h1>
+    <span id="status-indicator"><span class="status-dot disconnected"></span>Disconnected</span>
+    <nav>
+      <button data-tab="auth">Auth</button>
+      <button data-tab="cameras">Cameras</button>
+      <button data-tab="settings">Settings</button>
+      <button data-tab="recordings">Recordings</button>
+      <form method="POST" action="/logout" id="logout-form" style="display:none;margin-left:0.5rem;">
+        <button class="danger" type="submit" style="padding:0.4rem 0.8rem;font-size:0.85rem;">Logout</button>
+      </form>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Auth -->
+    <div id="tab-auth" class="section">
+      <h2>Ring Account</h2>
+      <div id="auth-msg"></div>
+
+      <!-- Login with email/password -->
+      <div class="card" id="login-card">
+        <h3 style="margin-bottom:0.75rem;">Sign In</h3>
+        <div style="margin-bottom:0.5rem;">
+          <label for="login-email">Email</label>
+          <input type="text" id="login-email" placeholder="ring@example.com" autocomplete="email" />
+        </div>
+        <div style="margin-bottom:0.5rem;">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="Password" />
+        </div>
+        <button class="primary" id="login-btn">Sign In</button>
+      </div>
+
+      <!-- 2FA step (hidden by default) -->
+      <div class="card" id="tfa-card" style="display:none;">
+        <h3 style="margin-bottom:0.75rem;">Two-Factor Authentication</h3>
+        <p id="tfa-prompt" style="font-size:0.85rem;color:#8b949e;margin-bottom:0.5rem;"></p>
+        <div style="margin-bottom:0.5rem;">
+          <label for="tfa-code">Code</label>
+          <input type="text" id="tfa-code" placeholder="123456" autocomplete="one-time-code" />
+        </div>
+        <button class="primary" id="tfa-btn">Verify</button>
+        <button class="danger" id="tfa-cancel" style="margin-left:0.5rem;">Cancel</button>
+      </div>
+
+      <!-- Manual token paste (collapsed) -->
+      <div class="card">
+        <details>
+          <summary style="cursor:pointer;color:#8b949e;font-size:0.85rem;">Or paste a refresh token manually</summary>
+          <div style="margin-top:0.75rem;">
+            <label for="token-input">Refresh Token</label>
+            <textarea id="token-input" rows="3" placeholder="Paste your Ring refresh token here..."></textarea>
+            <button class="primary" id="save-token" style="margin-top:0.5rem;">Connect</button>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Cameras -->
+    <div id="tab-cameras" class="section">
+      <h2>Cameras</h2>
+      <div id="cameras-list">
+        <p class="empty">Connect your Ring account first.</p>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div id="tab-settings" class="section">
+      <h2>Default Settings</h2>
+      <div class="card">
+        <div id="settings-msg"></div>
+        <div class="cam-fields">
+          <div>
+            <label for="default-duration">Recording Duration (s)</label>
+            <input type="number" id="default-duration" min="10" max="600" />
+          </div>
+          <div>
+            <label for="default-cooldown">Cooldown (s)</label>
+            <input type="number" id="default-cooldown" min="0" max="600" />
+          </div>
+          <div>
+            <label for="default-retention">Retention (days)</label>
+            <input type="number" id="default-retention" min="0" />
+            <p style="font-size:0.75rem;color:#8b949e;margin-top:0.15rem;">0 = keep forever</p>
+          </div>
+        </div>
+        <button class="primary" id="save-settings">Save</button>
+      </div>
+    </div>
+
+    <!-- Recordings -->
+    <div id="tab-recordings" class="section">
+      <h2>Recordings</h2>
+      <div id="recordings-list">
+        <p class="empty">No recordings yet.</p>
+      </div>
+      <div id="player-container" style="display:none;">
+        <video id="player" controls></video>
+      </div>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -334,4 +334,15 @@ describe("recordings API", () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toBe("paths must be a non-empty array");
   });
+
+  it("POST /bulk-delete rejects more than 500 paths", async () => {
+    const app = buildApp();
+    const paths = Array.from({ length: 501 }, (_, i) =>
+      `2024-01-15/Front_Door/${String(i).padStart(2, "0")}-00-00.mp4`
+    );
+    const res = await (await request(app)).post("/api/recordings/bulk-delete", { paths });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("too many paths (max 500)");
+  });
 });

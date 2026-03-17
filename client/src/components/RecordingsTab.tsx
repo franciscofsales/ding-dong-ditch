@@ -133,7 +133,7 @@ export default function RecordingsTab() {
             isSelectMode ? (
               <button className="btn" onClick={clearSelection}>Cancel</button>
             ) : (
-              <div style={{ display: "flex", gap: "var(--space-2)" }}>
+              <div className="page-header__actions">
                 <button
                   className="btn"
                   onClick={handleRedescribe}

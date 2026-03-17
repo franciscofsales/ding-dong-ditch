@@ -75,6 +75,9 @@ router.post("/bulk-delete", async (req: Request, res: Response) => {
   if (!Array.isArray(paths) || paths.length === 0) {
     return res.status(400).json({ error: "paths must be a non-empty array" });
   }
+  if (paths.length > 500) {
+    return res.status(400).json({ error: "too many paths (max 500)" });
+  }
   const safePaths = (paths as string[]).filter((p) => {
     if (typeof p !== "string") return false;
     const parts = p.split("/");

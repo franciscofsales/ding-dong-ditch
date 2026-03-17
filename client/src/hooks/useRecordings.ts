@@ -24,9 +24,12 @@ export function useRecordings() {
   // Fetch camera list
   useEffect(() => {
     fetch("/api/recordings/cameras")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch cameras");
+        return res.json();
+      })
       .then((data: string[]) => setCameras(data))
-      .catch(() => {});
+      .catch((err: Error) => console.warn("[recordings] camera list unavailable:", err.message));
   }, []);
 
   const loadRecordings = useCallback(async () => {

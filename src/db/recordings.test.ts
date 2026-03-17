@@ -6,6 +6,7 @@ import {
   deleteRecordingByPath,
   deleteRecordingsOlderThan,
   getDistinctCameras,
+  getRecordingByPath,
   backfillFromStorage,
 } from "./recordings.js";
 
@@ -181,5 +182,20 @@ describe("recordings DB", () => {
     const result = queryRecordings();
     expect(result.data).toHaveLength(0);
     expect(result.total).toBe(0);
+  });
+
+  it("getRecordingByPath returns the correct row", () => {
+    seed();
+    const rec = getRecordingByPath("2024-01-16/Front_Door/09-00-00.mp4");
+    expect(rec).not.toBeNull();
+    expect(rec!.camera).toBe("Front_Door");
+    expect(rec!.date).toBe("2024-01-16");
+    expect(rec!.snapshot_key).toBe("2024-01-16/Front_Door/09-00-00.jpg");
+  });
+
+  it("getRecordingByPath returns null for unknown path", () => {
+    seed();
+    const rec = getRecordingByPath("does/not/exist.mp4");
+    expect(rec).toBeNull();
   });
 });

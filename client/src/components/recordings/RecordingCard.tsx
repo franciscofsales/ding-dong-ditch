@@ -3,6 +3,9 @@ import type { Recording } from "../../types/recording";
 interface RecordingCardProps {
   recording: Recording;
   onPlay: (recording: Recording) => void;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (path: string) => void;
 }
 
 function formatTime(file: string): string {
@@ -13,11 +16,19 @@ function formatSize(bytes: number): string {
   return (bytes / 1024 / 1024).toFixed(1) + " MB";
 }
 
-export default function RecordingCard({ recording, onPlay }: RecordingCardProps) {
+export default function RecordingCard({ recording, onPlay, isSelectMode = false, isSelected = false, onToggleSelect }: RecordingCardProps) {
+  const handleClick = () => {
+    if (isSelectMode) {
+      onToggleSelect?.(recording.path);
+    } else {
+      onPlay(recording);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onPlay(recording);
+      handleClick();
     }
   };
 
@@ -25,14 +36,21 @@ export default function RecordingCard({ recording, onPlay }: RecordingCardProps)
 
   return (
     <div
-      className={`recording-card${isDoorbell ? " recording-card--doorbell" : ""}`}
-      role="button"
+      className={`recording-card${isDoorbell ? " recording-card--doorbell" : ""}${isSelected ? " recording-card--selected" : ""}`}
+      role={isSelectMode ? "checkbox" : "button"}
       tabIndex={0}
-      onClick={() => onPlay(recording)}
+      aria-checked={isSelectMode ? isSelected : undefined}
+      onClick={handleClick}
       onKeyDown={handleKeyDown}
-      aria-label={`Play ${isDoorbell ? "doorbell" : "motion"} recording from ${recording.camera} at ${recording.date} ${formatTime(recording.file)}`}
+      aria-label={`${isSelectMode ? (isSelected ? "Deselect" : "Select") : "Play"} ${isDoorbell ? "doorbell" : "motion"} recording from ${recording.camera} at ${recording.date} ${formatTime(recording.file)}`}
     >
       <div className="recording-card__thumbnail">
+        {isSelectMode && (
+          <span
+            className={`recording-card__checkbox${isSelected ? " recording-card__checkbox--checked" : ""}`}
+            aria-hidden="true"
+          />
+        )}
         {recording.snapshot_key ? (
           <img
             src={`/api/recordings/${recording.snapshot_key}`}

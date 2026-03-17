@@ -13,6 +13,7 @@ import SkeletonGrid from "./recordings/SkeletonGrid";
 
 export default function RecordingsTab() {
   const {
+    recordings,
     total,
     page,
     setPage,
@@ -29,6 +30,7 @@ export default function RecordingsTab() {
     isLoading,
     grouped,
     deleteRecording,
+    deleteRecordings,
     reload,
   } = useRecordings();
 
@@ -36,6 +38,38 @@ export default function RecordingsTab() {
   const [selectedRecording, setSelectedRecording] = useState<Recording | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [isRedescribing, setIsRedescribing] = useState(false);
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
+  const toggleSelect = (path: string) => {
+    setSelectedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedPaths(new Set(recordings.map((r) => r.path)));
+  };
+
+  const clearSelection = () => {
+    setSelectedPaths(new Set());
+    setIsSelectMode(false);
+  };
+
+  const handleBulkDelete = async () => {
+    const paths = Array.from(selectedPaths);
+    clearSelection();
+    try {
+      await deleteRecordings(paths);
+      showToast(`Deleted ${paths.length} recording${paths.length !== 1 ? "s" : ""}.`, "success");
+    } catch {
+      showToast("Failed to delete some recordings.", "error");
+    }
+  };
 
   const handleRedescribe = async () => {
     setIsRedescribing(true);
@@ -96,13 +130,20 @@ export default function RecordingsTab() {
         subtitle={total > 0 ? `${total} recording${total !== 1 ? "s" : ""}` : undefined}
         action={
           total > 0 ? (
-            <button
-              className="btn"
-              onClick={handleRedescribe}
-              disabled={isRedescribing}
-            >
-              {isRedescribing ? "Re-describing..." : "Re-describe"}
-            </button>
+            isSelectMode ? (
+              <button className="btn" onClick={clearSelection}>Cancel</button>
+            ) : (
+              <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                <button
+                  className="btn"
+                  onClick={handleRedescribe}
+                  disabled={isRedescribing}
+                >
+                  {isRedescribing ? "Re-describing..." : "Re-describe"}
+                </button>
+                <button className="btn" onClick={() => setIsSelectMode(true)}>Select</button>
+              </div>
+            )
           ) : undefined
         }
       />
@@ -116,6 +157,20 @@ export default function RecordingsTab() {
         onClearFilters={clearFilters}
         hasActiveFilters={!!hasActiveFilters}
       />
+
+      {isSelectMode && (
+        <div className="selection-bar">
+          <span className="selection-bar__count">{selectedPaths.size} selected</span>
+          <button className="btn btn-sm" onClick={selectAll}>Select all ({recordings.length})</button>
+          <button
+            className="btn btn-danger btn-sm"
+            disabled={selectedPaths.size === 0}
+            onClick={() => setConfirmBulkDelete(true)}
+          >
+            Delete selected
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <SkeletonGrid />
@@ -131,7 +186,13 @@ export default function RecordingsTab() {
         />
       ) : (
         <>
-          <RecordingGrid grouped={grouped} onPlay={setSelectedRecording} />
+          <RecordingGrid
+            grouped={grouped}
+            onPlay={setSelectedRecording}
+            isSelectMode={isSelectMode}
+            selectedPaths={selectedPaths}
+            onToggleSelect={toggleSelect}
+          />
           <Pagination
             showingFrom={showingFrom}
             showingTo={showingTo}
@@ -143,7 +204,7 @@ export default function RecordingsTab() {
         </>
       )}
 
-      {selectedRecording && (
+      {selectedRecording && !isSelectMode && (
         <RecordingModal
           recording={selectedRecording}
           onClose={() => setSelectedRecording(null)}
@@ -159,6 +220,17 @@ export default function RecordingsTab() {
           danger
           onConfirm={confirmDeleteAction}
           onCancel={() => setConfirmDelete(null)}
+        />
+      )}
+
+      {confirmBulkDelete && (
+        <ConfirmDialog
+          title="Delete Recordings"
+          message={`Are you sure you want to delete ${selectedPaths.size} recording${selectedPaths.size !== 1 ? "s" : ""}? This action cannot be undone.`}
+          confirmLabel="Delete"
+          danger
+          onConfirm={() => { setConfirmBulkDelete(false); handleBulkDelete(); }}
+          onCancel={() => setConfirmBulkDelete(false)}
         />
       )}
     </div>

@@ -4,6 +4,9 @@ import RecordingCard from "./RecordingCard";
 interface RecordingGridProps {
   grouped: Map<string, Recording[]>;
   onPlay: (recording: Recording) => void;
+  isSelectMode?: boolean;
+  selectedPaths?: Set<string>;
+  onToggleSelect?: (path: string) => void;
 }
 
 function formatDateHeader(dateStr: string): string {
@@ -26,7 +29,7 @@ function formatDateHeader(dateStr: string): string {
   }).format(date);
 }
 
-export default function RecordingGrid({ grouped, onPlay }: RecordingGridProps) {
+export default function RecordingGrid({ grouped, onPlay, isSelectMode = false, selectedPaths, onToggleSelect }: RecordingGridProps) {
   return (
     <div className="recording-grid">
       {Array.from(grouped.entries()).map(([date, recordings]) => (
@@ -35,7 +38,14 @@ export default function RecordingGrid({ grouped, onPlay }: RecordingGridProps) {
             {formatDateHeader(date)}
           </div>
           {recordings.map((rec) => (
-            <RecordingCard key={rec.path} recording={rec} onPlay={onPlay} />
+            <RecordingCard
+              key={rec.path}
+              recording={rec}
+              onPlay={onPlay}
+              isSelectMode={isSelectMode}
+              isSelected={selectedPaths?.has(rec.path) ?? false}
+              onToggleSelect={onToggleSelect}
+            />
           ))}
         </div>
       ))}

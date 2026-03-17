@@ -110,6 +110,29 @@ export function useRecordings() {
     [loadRecordings],
   );
 
+  const deleteRecordings = useCallback(
+    async (paths: string[]) => {
+      // Optimistic removal
+      setRecordings((prev) => prev.filter((r) => !paths.includes(r.path)));
+      setTotal((prev) => prev - paths.length);
+      try {
+        const res = await fetch("/api/recordings/bulk-delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paths }),
+        });
+        if (!res.ok) {
+          loadRecordings();
+          throw new Error("Bulk delete failed");
+        }
+      } catch {
+        loadRecordings();
+        throw new Error("Bulk delete failed");
+      }
+    },
+    [loadRecordings],
+  );
+
   const hasActiveFilters = filters.camera || filters.dateFrom || filters.dateTo || filters.search || filters.eventType;
 
   const grouped = useMemo(() => {
@@ -145,6 +168,7 @@ export function useRecordings() {
     error,
     grouped,
     deleteRecording,
+    deleteRecordings,
     reload: loadRecordings,
   };
 }

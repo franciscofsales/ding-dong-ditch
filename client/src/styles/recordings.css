@@ -249,6 +249,61 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* Card checkbox overlay */
+.recording-card__checkbox {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.recording-card__checkbox--checked {
+  background: var(--color-accent-emphasis);
+  border-color: var(--color-accent-emphasis);
+}
+.recording-card__checkbox--checked::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translate(1px, -1px);
+}
+
+/* Selected card state */
+.recording-card--selected {
+  outline: 2px solid var(--color-accent-emphasis);
+  outline-offset: 2px;
+}
+
+/* Selection action bar */
+.selection-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+.selection-bar__count {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-fg-default);
+  flex: 1;
+}
+
 /* Recording modal */
 .recording-modal__close {
   position: absolute;

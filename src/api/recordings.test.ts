@@ -21,6 +21,7 @@ import recordingsRouter from "./recordings.js";
 // Build a minimal Express app for testing
 function buildApp() {
   const app = express();
+  app.use(express.json());
   app.use("/api/recordings", recordingsRouter);
   return app;
 }
@@ -43,6 +44,16 @@ async function request(app: express.Express) {
     },
     async delete(path: string) {
       const res = await fetch(`${base}${path}`, { method: "DELETE" });
+      const body = await res.json().catch(() => null);
+      server.close();
+      return { status: res.status, body };
+    },
+    async post(path: string, data: unknown) {
+      const res = await fetch(`${base}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
       const body = await res.json().catch(() => null);
       server.close();
       return { status: res.status, body };
@@ -89,6 +100,7 @@ describe("recordings API", () => {
       file: "09-00-00.mp4",
       path: "2024-01-16/Front_Door/09-00-00.mp4",
       size: 512,
+      snapshot_key: "2024-01-16/Front_Door/09-00-00.jpg",
     });
   }
 
@@ -211,5 +223,80 @@ describe("recordings API", () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(0);
     expect(res.body.total).toBe(0);
+  });
+
+  it("DELETE also removes the snapshot when snapshot_key is present", async () => {
+    // seedRecordings seeds "2024-01-16/Front_Door/09-00-00.mp4" with snapshot_key "2024-01-16/Front_Door/09-00-00.jpg"
+    seedRecordings();
+    mockStorage.delete.mockResolvedValue(undefined);
+
+    const app = buildApp();
+    const res = await (await request(app)).delete("/api/recordings/2024-01-16/Front_Door/09-00-00.mp4");
+
+    expect(res.status).toBe(200);
+    expect(mockStorage.delete).toHaveBeenCalledWith("2024-01-16/Front_Door/09-00-00.mp4");
+    expect(mockStorage.delete).toHaveBeenCalledWith("2024-01-16/Front_Door/09-00-00.jpg");
+    expect(mockStorage.delete).toHaveBeenCalledTimes(2);
+  });
+
+  it("DELETE only calls storage.delete once when no snapshot_key", async () => {
+    // seedRecordings seeds "2024-01-15/Front_Door/10-00-00.mp4" with no snapshot_key
+    seedRecordings();
+    mockStorage.delete.mockResolvedValue(undefined);
+
+    const app = buildApp();
+    const res = await (await request(app)).delete("/api/recordings/2024-01-15/Front_Door/10-00-00.mp4");
+
+    expect(res.status).toBe(200);
+    expect(mockStorage.delete).toHaveBeenCalledTimes(1);
+    expect(mockStorage.delete).toHaveBeenCalledWith("2024-01-15/Front_Door/10-00-00.mp4");
+  });
+
+  it("POST /bulk-delete deletes multiple recordings and their snapshots", async () => {
+    // seedRecordings has 3 recordings; "2024-01-16/Front_Door/09-00-00.mp4" has a snapshot_key
+    seedRecordings();
+    mockStorage.delete.mockResolvedValue(undefined);
+
+    const app = buildApp();
+    const res = await (await request(app)).post("/api/recordings/bulk-delete", {
+      paths: [
+        "2024-01-15/Front_Door/10-00-00.mp4",    // no snapshot
+        "2024-01-16/Front_Door/09-00-00.mp4",    // has snapshot
+      ],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.deleted).toBe(2);
+    expect(res.body.errors).toBe(0);
+    // 3 storage.delete calls: mp4 #1, mp4 #2, jpg #2 (snapshot)
+    expect(mockStorage.delete).toHaveBeenCalledTimes(3);
+  });
+
+  it("POST /bulk-delete rejects path traversal", async () => {
+    const app = buildApp();
+    const res = await (await request(app)).post("/api/recordings/bulk-delete", {
+      paths: ["2024-01-15/../etc/passwd"],
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("invalid path");
+  });
+
+  it("POST /bulk-delete rejects empty paths array", async () => {
+    const app = buildApp();
+    const res = await (await request(app)).post("/api/recordings/bulk-delete", {
+      paths: [],
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("paths must be a non-empty array");
+  });
+
+  it("POST /bulk-delete rejects missing paths", async () => {
+    const app = buildApp();
+    const res = await (await request(app)).post("/api/recordings/bulk-delete", {});
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("paths must be a non-empty array");
   });
 });

@@ -109,6 +109,11 @@ export function queryRecordings(query: RecordingQuery = {}): PaginatedResult<Rec
   return { data, total, limit, offset };
 }
 
+export function getRecordingByPath(recordingPath: string): RecordingRow | null {
+  const db = getDb();
+  return (db.prepare("SELECT * FROM recordings WHERE path = ?").get(recordingPath) as RecordingRow) ?? null;
+}
+
 export function deleteRecordingByPath(recordingPath: string): void {
   const db = getDb();
   db.prepare("DELETE FROM recordings WHERE path = ?").run(recordingPath);

@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { getStorage } from "../storage/index.js";
-import { queryRecordings, deleteRecordingByPath, getDistinctCameras } from "../db/recordings.js";
+import { queryRecordings, deleteRecordingByPath, getRecordingByPath, getDistinctCameras } from "../db/recordings.js";
 import { isAiEnabled } from "../ai/describe.js";
 import { redescribeRecordings, isRedescribeRunning } from "../ai/redescribe.js";
 import { log } from "../logger.js";
@@ -59,6 +59,37 @@ router.post("/redescribe", async (_req: Request, res: Response) => {
   }
 });
 
+// Bulk delete clips
+router.post("/bulk-delete", async (req: Request, res: Response) => {
+  const { paths } = req.body as { paths?: unknown };
+  if (!Array.isArray(paths) || paths.length === 0) {
+    return res.status(400).json({ error: "paths must be a non-empty array" });
+  }
+  const safePaths = (paths as string[]).filter(
+    (p) => typeof p === "string" && !/\.\./.test(p)
+  );
+  if (safePaths.length !== paths.length) {
+    return res.status(400).json({ error: "invalid path" });
+  }
+
+  let deleted = 0;
+  let errors = 0;
+  for (const p of safePaths) {
+    try {
+      const rec = getRecordingByPath(p);
+      await getStorage().delete(p);
+      if (rec?.snapshot_key) {
+        await getStorage().delete(rec.snapshot_key).catch(() => {});
+      }
+      deleteRecordingByPath(p);
+      deleted++;
+    } catch {
+      errors++;
+    }
+  }
+  res.json({ deleted, errors });
+});
+
 // Serve a clip
 router.get("/:date/:camera/:file", async (req: Request, res: Response) => {
   const date = req.params.date as string;
@@ -89,7 +120,11 @@ router.delete("/:date/:camera/:file", async (req: Request, res: Response) => {
 
   const key = `${date}/${camera}/${file}`;
   try {
+    const rec = getRecordingByPath(key);
     await getStorage().delete(key);
+    if (rec?.snapshot_key) {
+      await getStorage().delete(rec.snapshot_key).catch(() => {});
+    }
     deleteRecordingByPath(key);
     res.json({ ok: true });
   } catch (e) {

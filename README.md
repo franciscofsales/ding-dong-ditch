@@ -200,6 +200,7 @@ The database schema is versioned via `PRAGMA user_version`. Migrations run autom
 |---------|--------|
 | v1 | Initial schema: recordings table, FTS5 index, triggers |
 | v2 | Added `event_type TEXT DEFAULT 'motion'` column |
+| v3 | Guard FTS delete/update triggers against NULL descriptions (fixes errors when deleting backfilled recordings that have no AI description) |
 
 ## Development
 

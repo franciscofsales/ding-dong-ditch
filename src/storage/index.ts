@@ -3,7 +3,7 @@ import type { StorageBackend } from "./backend.js";
 import { LocalStorageBackend } from "./local.js";
 import { log } from "../logger.js";
 
-export type { StorageBackend, RecordingMetadata } from "./backend.js";
+export type { StorageBackend } from "./backend.js";
 
 let storage: StorageBackend | null = null;
 

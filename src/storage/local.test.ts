@@ -43,39 +43,6 @@ describe("LocalStorageBackend", () => {
     });
   });
 
-  describe("list", () => {
-    it("returns empty array when no recordings exist", async () => {
-      const results = await storage.list();
-      expect(results).toEqual([]);
-    });
-
-    it("lists recordings sorted by date descending", async () => {
-      // Create two date directories with recordings
-      const dir1 = path.join(tmpDir, "2024-01-15/Cam_A");
-      const dir2 = path.join(tmpDir, "2024-01-16/Cam_A");
-      fs.mkdirSync(dir1, { recursive: true });
-      fs.mkdirSync(dir2, { recursive: true });
-      fs.writeFileSync(path.join(dir1, "10-00-00.mp4"), "a");
-      fs.writeFileSync(path.join(dir2, "11-00-00.mp4"), "b");
-
-      const results = await storage.list();
-      expect(results).toHaveLength(2);
-      expect(results[0].date).toBe("2024-01-16");
-      expect(results[1].date).toBe("2024-01-15");
-    });
-
-    it("only includes .mp4 files", async () => {
-      const dir = path.join(tmpDir, "2024-01-15/Cam_A");
-      fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(path.join(dir, "10-00-00.mp4"), "video");
-      fs.writeFileSync(path.join(dir, "10-00-00.jpg"), "image");
-
-      const results = await storage.list();
-      expect(results).toHaveLength(1);
-      expect(results[0].file).toBe("10-00-00.mp4");
-    });
-  });
-
   describe("delete", () => {
     it("removes the file", async () => {
       const dir = path.join(tmpDir, "2024-01-15/Cam_A");

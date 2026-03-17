@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import type { Response } from "express";
-import type { StorageBackend, RecordingMetadata } from "./backend.js";
+import type { StorageBackend } from "./backend.js";
 import { log } from "../logger.js";
 
 export class LocalStorageBackend implements StorageBackend {
@@ -21,48 +21,6 @@ export class LocalStorageBackend implements StorageBackend {
       fs.copyFileSync(localPath, dest);
       fs.unlinkSync(localPath);
     }
-  }
-
-  async list(): Promise<RecordingMetadata[]> {
-    const results: RecordingMetadata[] = [];
-    try {
-      const dates = fs.readdirSync(this.basePath)
-        .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
-        .sort()
-        .reverse();
-
-      for (const date of dates) {
-        const datePath = path.join(this.basePath, date);
-        const cameras = fs.readdirSync(datePath).filter((f) =>
-          fs.statSync(path.join(datePath, f)).isDirectory()
-        );
-
-        for (const camera of cameras) {
-          const camPath = path.join(datePath, camera);
-          const files = fs.readdirSync(camPath).filter((f) => f.endsWith(".mp4"));
-
-          for (const file of files) {
-            const filePath = path.join(camPath, file);
-            const stat = fs.statSync(filePath);
-            const jpgFile = file.replace(".mp4", ".jpg");
-            const jpgPath = path.join(camPath, jpgFile);
-            const snapshot_key = fs.existsSync(jpgPath) ? `${date}/${camera}/${jpgFile}` : undefined;
-            results.push({
-              date,
-              camera,
-              file,
-              path: `${date}/${camera}/${file}`,
-              size: stat.size,
-              created: stat.birthtime,
-              snapshot_key,
-            });
-          }
-        }
-      }
-    } catch {
-      // recordings dir may not exist yet
-    }
-    return results;
   }
 
   async serve(key: string, res: Response): Promise<void> {

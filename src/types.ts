@@ -17,8 +17,6 @@ export interface AppConfig {
   defaults: DefaultsConfig;
 }
 
-export type { RecordingMetadata as RecordingEntry } from "./storage/backend.js";
-
 export interface LoginSession {
   restClient: import("ring-client-api/rest-client").RingRestClient;
   createdAt: number;

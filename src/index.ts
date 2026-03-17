@@ -5,10 +5,9 @@ import { fileURLToPath } from "url";
 import apiRouter from "./api/router.js";
 import { start } from "./recorder/manager.js";
 import { startCleanup } from "./recorder/cleanup.js";
-import { initStorage, getStorage } from "./storage/index.js";
+import { initStorage } from "./storage/index.js";
 import { initMqtt } from "./mqtt/publisher.js";
 import { initDb, closeDb } from "./db/index.js";
-import { backfillFromStorage, backfillSnapshotKeys } from "./db/recordings.js";
 import { log } from "./logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -101,19 +100,7 @@ initDb();
 initMqtt();
 
 // Initialize storage then start services
-initStorage().then(async () => {
-  // Backfill DB from existing storage (idempotent, safe to run every startup)
-  try {
-    const existing = await getStorage().list();
-    const count = backfillFromStorage(existing);
-    if (count > 0) log.info(`[db] backfilled ${count} recordings from storage`);
-
-    const snapshotCount = backfillSnapshotKeys(existing);
-    if (snapshotCount > 0) log.info(`[db] linked ${snapshotCount} snapshot thumbnails`);
-  } catch (e) {
-    log.error("[db] backfill error:", (e as Error).message);
-  }
-
+initStorage().then(() => {
   start().catch((e) => {
     log.error("[startup] recorder failed to start:", (e as Error).message);
   });

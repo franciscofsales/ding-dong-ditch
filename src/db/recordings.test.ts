@@ -7,7 +7,6 @@ import {
   deleteRecordingsOlderThan,
   getDistinctCameras,
   getRecordingByPath,
-  backfillFromStorage,
 } from "./recordings.js";
 
 describe("recordings DB", () => {
@@ -128,21 +127,6 @@ describe("recordings DB", () => {
     seed();
     const cameras = getDistinctCameras();
     expect(cameras).toEqual(["Back_Yard", "Front_Door"]);
-  });
-
-  it("backfills from storage data", () => {
-    const storageData = [
-      { camera: "Cam1", date: "2024-02-01", file: "12-00-00.mp4", path: "2024-02-01/Cam1/12-00-00.mp4", size: 100 },
-      { camera: "Cam2", date: "2024-02-01", file: "13-00-00.mp4", path: "2024-02-01/Cam2/13-00-00.mp4", size: 200 },
-    ];
-    const count = backfillFromStorage(storageData);
-    expect(count).toBe(2);
-    expect(queryRecordings().total).toBe(2);
-
-    // Re-backfill is idempotent
-    const count2 = backfillFromStorage(storageData);
-    expect(count2).toBe(0);
-    expect(queryRecordings().total).toBe(2);
   });
 
   it("stores and retrieves snapshot_key", () => {

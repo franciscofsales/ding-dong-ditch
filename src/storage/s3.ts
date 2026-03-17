@@ -1,7 +1,7 @@
 import fs from "fs";
 import type { Response } from "express";
 import type { Readable } from "stream";
-import type { StorageBackend, RecordingMetadata } from "./backend.js";
+import type { StorageBackend } from "./backend.js";
 import { log } from "../logger.js";
 
 // Types for @aws-sdk/client-s3 (dynamically imported)
@@ -54,63 +54,6 @@ export class S3StorageBackend implements StorageBackend {
 
     // Remove temp file after successful upload
     fs.unlinkSync(localPath);
-  }
-
-  async list(): Promise<RecordingMetadata[]> {
-    const { ListObjectsV2Command } = await import("@aws-sdk/client-s3");
-
-    const results: RecordingMetadata[] = [];
-    const jpgKeys = new Set<string>();
-    let continuationToken: string | undefined;
-
-    do {
-      const response = await this.client.send(new ListObjectsV2Command({
-        Bucket: this.bucket,
-        Prefix: this.prefix,
-        ContinuationToken: continuationToken,
-      }));
-
-      for (const obj of response.Contents || []) {
-        if (!obj.Key) continue;
-
-        const relKey = this.prefix ? obj.Key.slice(this.prefix.length) : obj.Key;
-
-        if (obj.Key.endsWith(".jpg")) {
-          jpgKeys.add(relKey);
-          continue;
-        }
-
-        if (!obj.Key.endsWith(".mp4")) continue;
-
-        // Strip prefix and parse: YYYY-MM-DD/Camera_Name/HH-MM-SS.mp4
-        const parts = relKey.split("/");
-        if (parts.length !== 3) continue;
-
-        const [date, camera, file] = parts;
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-
-        results.push({
-          date,
-          camera,
-          file,
-          path: relKey,
-          size: obj.Size || 0,
-          created: obj.LastModified || new Date(),
-        });
-      }
-
-      continuationToken = response.NextContinuationToken;
-    } while (continuationToken);
-
-    // Match .jpg snapshots to their .mp4 counterparts
-    for (const result of results) {
-      const jpgKey = result.path.replace(".mp4", ".jpg");
-      if (jpgKeys.has(jpgKey)) result.snapshot_key = jpgKey;
-    }
-
-    // Sort newest first (matches local backend behavior)
-    results.sort((a, b) => b.path.localeCompare(a.path));
-    return results;
   }
 
   async serve(key: string, res: Response): Promise<void> {

@@ -34,7 +34,7 @@ export default function RecordingsTab() {
   const [playerSrc, setPlayerSrc] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Fetch camera list for filter dropdown
   useEffect(() => {

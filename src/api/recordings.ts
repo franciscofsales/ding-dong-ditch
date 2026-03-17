@@ -7,18 +7,28 @@ import { log } from "../logger.js";
 
 const router = Router();
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const CAMERA_RE = /^[\w-]+$/;
+const FILE_RE = /^\d{2}-\d{2}-\d{2}\.(mp4|jpg)$/;
+
+function isValidPath(date: string, camera: string, file: string): boolean {
+  return DATE_RE.test(date) && CAMERA_RE.test(camera) && FILE_RE.test(file);
+}
+
 // List recordings with filtering, search, and pagination
 router.get("/", (_req: Request, res: Response) => {
   try {
     const { camera, dateFrom, dateTo, search, eventType, limit, offset } = _req.query;
+    const parsedLimit = Number(limit);
+    const parsedOffset = Number(offset);
     const result = queryRecordings({
       camera: camera as string | undefined,
       dateFrom: dateFrom as string | undefined,
       dateTo: dateTo as string | undefined,
       search: search as string | undefined,
       eventType: eventType as string | undefined,
-      limit: limit ? Number(limit) : undefined,
-      offset: offset ? Number(offset) : undefined,
+      limit: limit && Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 100) : undefined,
+      offset: offset && Number.isFinite(parsedOffset) ? Math.max(parsedOffset, 0) : undefined,
     });
     res.json(result);
   } catch (e) {
@@ -65,9 +75,11 @@ router.post("/bulk-delete", async (req: Request, res: Response) => {
   if (!Array.isArray(paths) || paths.length === 0) {
     return res.status(400).json({ error: "paths must be a non-empty array" });
   }
-  const safePaths = (paths as string[]).filter(
-    (p) => typeof p === "string" && !/\.\./.test(p)
-  );
+  const safePaths = (paths as string[]).filter((p) => {
+    if (typeof p !== "string") return false;
+    const parts = p.split("/");
+    return parts.length === 3 && isValidPath(parts[0], parts[1], parts[2]);
+  });
   if (safePaths.length !== paths.length) {
     return res.status(400).json({ error: "invalid path" });
   }
@@ -96,7 +108,7 @@ router.get("/:date/:camera/:file", async (req: Request, res: Response) => {
   const camera = req.params.camera as string;
   const file = req.params.file as string;
 
-  if (/\.\./.test(date + camera + file)) {
+  if (!isValidPath(date, camera, file)) {
     return res.status(400).json({ error: "invalid path" });
   }
 
@@ -114,7 +126,7 @@ router.delete("/:date/:camera/:file", async (req: Request, res: Response) => {
   const camera = req.params.camera as string;
   const file = req.params.file as string;
 
-  if (/\.\./.test(date + camera + file)) {
+  if (!isValidPath(date, camera, file)) {
     return res.status(400).json({ error: "invalid path" });
   }
 

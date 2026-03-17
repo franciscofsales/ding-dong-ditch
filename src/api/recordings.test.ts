@@ -216,6 +216,31 @@ describe("recordings API", () => {
     expect(res.body.data[0]).toHaveProperty("event_type");
   });
 
+  it("GET / clamps limit to 100 when a larger value is requested", async () => {
+    seedRecordings();
+    const app = buildApp();
+    const res = await (await request(app)).get("/api/recordings?limit=9999");
+
+    expect(res.status).toBe(200);
+    expect(res.body.limit).toBe(100);
+  });
+
+  it("GET / rejects paths with invalid date format", async () => {
+    const app = buildApp();
+    const res = await (await request(app)).get("/api/recordings/not-a-date/Front_Door/10-00-00.mp4");
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("invalid path");
+  });
+
+  it("GET / rejects paths with invalid file format", async () => {
+    const app = buildApp();
+    const res = await (await request(app)).get("/api/recordings/2024-01-15/Front_Door/passwd");
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("invalid path");
+  });
+
   it("GET / returns empty results when no recordings exist", async () => {
     const app = buildApp();
     const res = await (await request(app)).get("/api/recordings");
@@ -270,6 +295,16 @@ describe("recordings API", () => {
     expect(res.body.errors).toBe(0);
     // 3 storage.delete calls: mp4 #1, mp4 #2, jpg #2 (snapshot)
     expect(mockStorage.delete).toHaveBeenCalledTimes(3);
+  });
+
+  it("POST /bulk-delete rejects paths that fail allowlist validation", async () => {
+    const app = buildApp();
+    const res = await (await request(app)).post("/api/recordings/bulk-delete", {
+      paths: ["2024-01-15/Front_Door/not-a-valid-file"],
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("invalid path");
   });
 
   it("POST /bulk-delete rejects path traversal", async () => {

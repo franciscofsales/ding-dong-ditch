@@ -91,7 +91,9 @@ export function queryRecordings(query: RecordingQuery = {}): PaginatedResult<Rec
   if (query.search) {
     joinClause = "JOIN recordings_fts ON recordings_fts.rowid = r.id";
     conditions.push("recordings_fts MATCH @search");
-    params.search = query.search;
+    // Wrap in double-quotes to force literal phrase matching and prevent
+    // FTS5 query injection (operators like NOT, OR, *, NEAR, column:filters)
+    params.search = '"' + query.search.replace(/"/g, '""') + '"';
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";

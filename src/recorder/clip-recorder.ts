@@ -21,7 +21,7 @@ function tempPath(cameraName: string): { filePath: string; key: string } {
   return { filePath, key };
 }
 
-export async function recordClip(cam: RingCamera, durationSeconds: number): Promise<void> {
+export async function recordClip(cam: RingCamera, durationSeconds: number, snapshotKey?: string | null): Promise<void> {
   const { filePath, key } = tempPath(cam.name);
   console.log(`[rec] ${cam.name}: recording ${durationSeconds}s → ${key}`);
 
@@ -54,6 +54,7 @@ export async function recordClip(cam: RingCamera, durationSeconds: number): Prom
       date: now.toISOString().slice(0, 10),
       timestamp: now.toISOString(),
       url: `/api/recordings/${key}`,
+      snapshot_url: snapshotKey ? `/api/recordings/${snapshotKey}` : null,
     });
   } finally {
     try { await liveCall.stop(); } catch { /* ignore */ }

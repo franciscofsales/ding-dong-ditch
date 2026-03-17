@@ -111,10 +111,10 @@ Each Ring camera automatically appears in HA as:
 - **Sensor** (`sensor.dingdongditch_<camera>_last_recording`) -- updates with each new recording timestamp
 - **Device trigger** -- fires on each recording, usable in automations
 
-Example automation for mobile notifications:
+Example automation for mobile notifications (with snapshot image):
 ```yaml
 alias: "DingDongDitch Recording Alert"
-description: "Send a push notification when a new Ring recording is saved"
+description: "Send a push notification with snapshot when a new Ring recording is saved"
 mode: single
 triggers:
   - trigger: state
@@ -125,9 +125,14 @@ actions:
     data:
       title: "Motion: {{ trigger.to_state.attributes.camera }}"
       message: "Recording saved at {{ trigger.to_state.state }}"
+      data:
+        image: "https://your-host{{ trigger.to_state.attributes.snapshot_url }}"
+        url: "https://your-host{{ trigger.to_state.attributes.url }}"
 ```
 
-Recordings can be viewed directly via `https://your-host/api/recordings/<path>`.
+A snapshot is captured at the moment of motion (before recording starts) so the notification image shows what triggered the event. Tapping the notification opens the full recording.
+
+Recordings can also be viewed directly via `https://your-host/api/recordings/<path>`.
 
 ## Architecture
 

@@ -17,6 +17,7 @@ export interface RecordingEvent {
   date: string;
   timestamp: string;
   url: string;
+  snapshot_url: string | null;
 }
 
 export function initMqtt(): void {

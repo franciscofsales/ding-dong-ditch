@@ -1,6 +1,7 @@
 import type { RingCamera } from "ring-client-api";
 import { recordClip } from "./clip-recorder.js";
 import { getCameraConfig } from "../config/store.js";
+import { captureSnapshot } from "./snapshot.js";
 
 interface CameraState {
   recording: boolean;
@@ -29,8 +30,11 @@ export async function handleMotion(cam: RingCamera): Promise<void> {
   s.recording = true;
   s.lastRecordAt = now;
 
+  // Capture snapshot at the moment of motion, before recording starts
+  const snapshotKey = await captureSnapshot(cam);
+
   try {
-    await recordClip(cam, cfg.recordingDuration);
+    await recordClip(cam, cfg.recordingDuration, snapshotKey);
   } catch (e) {
     console.error(`[rec] ${cam.name}: error:`, (e as Error).message);
   } finally {

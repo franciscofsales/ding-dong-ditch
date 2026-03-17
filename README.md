@@ -189,8 +189,10 @@ The response is a paginated object:
 
 Additional endpoints:
 - `GET /api/recordings/cameras` -- returns distinct camera names for filter dropdowns
+- `GET /api/recordings/:date/:camera/:file` -- serves the raw video or snapshot file
 - `DELETE /api/recordings/:date/:camera/:file` -- removes the recording file, its paired snapshot (if any), and the database record
-- `POST /api/recordings/bulk-delete` -- accepts `{ "paths": ["2024-01-15/Front_Door/10-00-00.mp4", ...] }` and deletes each recording + snapshot; returns `{ "deleted": N, "errors": N }`
+- `POST /api/recordings/bulk-delete` -- accepts `{ "paths": ["2024-01-15/Front_Door/10-00-00.mp4", ...] }` (max 500) and deletes each recording + snapshot; returns `{ "deleted": N, "errors": N }`
+- `POST /api/recordings/redescribe` -- (re-)runs AI descriptions on recordings that have none; accepts `{ "limit": N }` (1–50, default 10); requires `AI_ENABLED=true`; returns `{ "processed": N, "updated": N, "errors": N }`; responds 400 if AI is disabled, 409 if already running
 
 ### Migration
 
@@ -229,7 +231,13 @@ npm run dev          # Vite dev server (proxies API to localhost:3000)
 npm run build        # Build to dist/client/
 ```
 
-During development, run the backend (`npm run dev`) and frontend (`cd client && npm run dev`) in separate terminals. The Vite dev server proxies `/api`, `/login`, and `/logout` to the Express backend.
+Run both servers in one command:
+
+```bash
+npm run dev          # starts Express + Vite concurrently
+```
+
+Or run them in separate terminals if you prefer (`npm run dev:server` / `npm run dev:client`). The Vite dev server proxies `/api`, `/login`, and `/logout` to the Express backend.
 
 ### Tests
 
@@ -267,18 +275,28 @@ Per-camera overrides are available on the Cameras tab.
 
 ### Environment Variables
 
+<!-- AUTO-GENERATED from .env.example -->
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `UI_PASSWORD` | _(empty)_ | Password-protect the web UI |
+| `UI_PASSWORD` | _(empty)_ | Password-protect the web UI (leave empty to disable) |
 | `STORAGE_BACKEND` | `local` | `local` or `s3` |
+| `S3_BUCKET` | | S3 bucket name |
+| `S3_REGION` | `us-east-1` | S3 region |
+| `S3_ENDPOINT` | `https://s3.amazonaws.com` | S3 endpoint (override for MinIO, B2, R2) |
+| `S3_ACCESS_KEY_ID` | | S3 access key |
+| `S3_SECRET_ACCESS_KEY` | | S3 secret key |
+| `S3_PREFIX` | | Key prefix (e.g. `dingdongditch/`) |
 | `MQTT_ENABLED` | `false` | Enable MQTT event publishing |
 | `MQTT_BROKER` | | MQTT broker URL (e.g. `mqtt://emqx:1883`) |
+| `MQTT_TOPIC_PREFIX` | `dingdongditch` | Topic prefix for published events |
+| `MQTT_DISCOVERY_PREFIX` | `homeassistant` | Home Assistant MQTT discovery prefix |
 | `AI_ENABLED` | `false` | Enable AI snapshot descriptions |
 | `AI_API_URL` | | OpenAI-compatible API base URL |
 | `AI_API_KEY` | _(empty)_ | API key (optional for local models) |
 | `AI_MODEL` | `gpt-4o` | Vision model to use |
-
-See `.env.example` for the full list including S3 and MQTT topic options.
+| `AI_PROMPT` | _(built-in)_ | Custom prompt sent with each snapshot |
+| `LOG_LEVEL` | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
+<!-- END AUTO-GENERATED -->
 
 ## Credits
 

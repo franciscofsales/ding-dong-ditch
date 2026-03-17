@@ -168,6 +168,40 @@ describe("recordings API", () => {
     expect(res.body).toEqual(["Back_Yard", "Front_Door"]);
   });
 
+  it("GET serves camera names with spaces", async () => {
+    // Serve mock must end the response or fetch will hang
+    mockStorage.serve.mockImplementation((_key: string, res: express.Response) => {
+      res.end();
+      return Promise.resolve();
+    });
+    const app = buildApp();
+    // URL-encode the space so the path is a valid URL
+    const res = await (await request(app)).get("/api/recordings/2024-01-15/Front%20Door/10-00-00.mp4");
+
+    expect(res.status).not.toBe(400);
+    expect(mockStorage.serve).toHaveBeenCalledWith("2024-01-15/Front Door/10-00-00.mp4", expect.anything());
+  });
+
+  it("POST /bulk-delete accepts camera names with spaces", async () => {
+    insertRecording({
+      camera: "Front Door",
+      date: "2024-01-15",
+      timestamp: "2024-01-15T10:00:00",
+      file: "10-00-00.mp4",
+      path: "2024-01-15/Front Door/10-00-00.mp4",
+      size: 1024,
+      description: "A person at the front door",
+    });
+    mockStorage.delete.mockResolvedValue(undefined);
+    const app = buildApp();
+    const res = await (await request(app)).post("/api/recordings/bulk-delete", {
+      paths: ["2024-01-15/Front Door/10-00-00.mp4"],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.deleted).toBe(1);
+  });
+
   it("rejects path traversal attempts with .. in path segments", async () => {
     const app = buildApp();
     const res = await (await request(app)).get("/api/recordings/2024-01-15/..cam/10-00-00.mp4");

@@ -8,11 +8,22 @@ import { log } from "../logger.js";
 const router = Router();
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const CAMERA_RE = /^[\w-]+$/;
 const FILE_RE = /^\d{2}-\d{2}-\d{2}\.(mp4|jpg)$/;
 
+/** Allow any camera name except path-traversal characters. */
+function isValidCameraSegment(camera: string): boolean {
+  return camera.length > 0 && !camera.includes("..") && !camera.includes("/") && !camera.includes("\\");
+}
+
 function isValidPath(date: string, camera: string, file: string): boolean {
-  return DATE_RE.test(date) && CAMERA_RE.test(camera) && FILE_RE.test(file);
+  return DATE_RE.test(date) && isValidCameraSegment(camera) && FILE_RE.test(file);
+}
+
+function isValidRecordingPath(p: string): boolean {
+  const parts = p.split("/");
+  if (parts.length !== 3) return false;
+  const [date, camera, file] = parts;
+  return DATE_RE.test(date) && isValidCameraSegment(camera) && FILE_RE.test(file);
 }
 
 // List recordings with filtering, search, and pagination
@@ -78,11 +89,7 @@ router.post("/bulk-delete", async (req: Request, res: Response) => {
   if (paths.length > 500) {
     return res.status(400).json({ error: "too many paths (max 500)" });
   }
-  const safePaths = (paths as string[]).filter((p) => {
-    if (typeof p !== "string") return false;
-    const parts = p.split("/");
-    return parts.length === 3 && isValidPath(parts[0], parts[1], parts[2]);
-  });
+  const safePaths = (paths as string[]).filter((p) => typeof p === "string" && isValidRecordingPath(p));
   if (safePaths.length !== paths.length) {
     return res.status(400).json({ error: "invalid path" });
   }

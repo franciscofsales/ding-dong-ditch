@@ -53,6 +53,10 @@ export function useRecordings() {
       const result: PaginatedResult = await res.json();
       setRecordings(result.data);
       setTotal(result.total);
+      // Auto-correct stale page: if this page is empty but recordings exist, jump to last valid page
+      if (result.data.length === 0 && result.total > 0 && page > 0) {
+        setPage(Math.max(0, Math.ceil(result.total / PAGE_SIZE) - 1));
+      }
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
         setError("Failed to load recordings.");
@@ -125,13 +129,13 @@ export function useRecordings() {
           body: JSON.stringify({ paths }),
         });
         if (!res.ok) {
-          loadRecordings();
           throw new Error("Bulk delete failed");
         }
       } catch {
-        loadRecordings();
+        loadRecordings(); // revert optimistic update on failure
         throw new Error("Bulk delete failed");
       }
+      loadRecordings(); // sync with server after success
     },
     [loadRecordings],
   );

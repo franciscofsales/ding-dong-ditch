@@ -49,7 +49,7 @@ describe("motion-handler", () => {
     expect(captureSnapshot).toHaveBeenCalledWith(cam);
     expect(describeSnapshot).toHaveBeenCalledWith(Buffer.from("img"), "Front Door");
     expect(recordClip).toHaveBeenCalledWith(
-      cam, 120, "2024-01-15/Cam/12-00-00.jpg", expect.any(Promise),
+      cam, 120, "2024-01-15/Cam/12-00-00.jpg", expect.any(Promise), "motion",
     );
     // The promise should resolve to the AI description
     const descPromise = vi.mocked(recordClip).mock.calls[0][3] as Promise<string | undefined>;
@@ -102,6 +102,20 @@ describe("motion-handler", () => {
     expect(recordClip).toHaveBeenCalledTimes(1); // still just 1
   });
 
+  it("passes doorbell eventType to recordClip when triggered by doorbell", async () => {
+    vi.mocked(getCameraConfig).mockReturnValue({
+      enabled: true,
+      recordingDuration: 120,
+      cooldownSeconds: 20,
+    });
+    const cam = makeCam(5, "Front Door");
+    await handleMotion(cam, "doorbell");
+
+    expect(recordClip).toHaveBeenCalledWith(
+      cam, 120, "2024-01-15/Cam/12-00-00.jpg", expect.any(Promise), "doorbell",
+    );
+  });
+
   it("passes undefined description when snapshot fails", async () => {
     vi.mocked(captureSnapshot).mockResolvedValueOnce(null);
     // Ensure getCameraConfig returns defaults (may have been changed by earlier tests)
@@ -115,7 +129,7 @@ describe("motion-handler", () => {
     await handleMotion(cam);
 
     expect(describeSnapshot).not.toHaveBeenCalled();
-    expect(recordClip).toHaveBeenCalledWith(cam, 120, undefined, expect.any(Promise));
+    expect(recordClip).toHaveBeenCalledWith(cam, 120, undefined, expect.any(Promise), "motion");
     // The promise should resolve to undefined when no snapshot
     const descPromise = vi.mocked(recordClip).mock.calls[0][3] as Promise<string | undefined>;
     await expect(descPromise).resolves.toBeUndefined();

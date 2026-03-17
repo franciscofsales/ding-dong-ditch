@@ -70,6 +70,7 @@ describe("recordings API", () => {
       path: "2024-01-15/Front_Door/10-00-00.mp4",
       size: 1024,
       description: "A person at the door",
+      event_type: "doorbell",
     });
     insertRecording({
       camera: "Back_Yard",
@@ -79,6 +80,7 @@ describe("recordings API", () => {
       path: "2024-01-15/Back_Yard/11-00-00.mp4",
       size: 2048,
       description: "Cat in the yard",
+      event_type: "motion",
     });
     insertRecording({
       camera: "Front_Door",
@@ -180,6 +182,26 @@ describe("recordings API", () => {
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
     expect(mockStorage.delete).toHaveBeenCalledWith("2024-01-15/Front_Door/10-00-00.mp4");
+  });
+
+  it("GET / filters by eventType", async () => {
+    seedRecordings();
+    const app = buildApp();
+    const res = await (await request(app)).get("/api/recordings?eventType=doorbell");
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+    expect(res.body.data[0].event_type).toBe("doorbell");
+    expect(res.body.data[0].camera).toBe("Front_Door");
+  });
+
+  it("GET / includes event_type in response data", async () => {
+    seedRecordings();
+    const app = buildApp();
+    const res = await (await request(app)).get("/api/recordings");
+
+    expect(res.status).toBe(200);
+    expect(res.body.data[0]).toHaveProperty("event_type");
   });
 
   it("GET / returns empty results when no recordings exist", async () => {

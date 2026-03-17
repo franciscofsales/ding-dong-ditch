@@ -27,6 +27,7 @@ describe("recordings DB", () => {
       path: "2024-01-15/Front_Door/10-00-00.mp4",
       size: 1024,
       description: "A person approaching the front door",
+      event_type: "doorbell",
     });
     insertRecording({
       camera: "Back_Yard",
@@ -36,6 +37,7 @@ describe("recordings DB", () => {
       path: "2024-01-15/Back_Yard/11-00-00.mp4",
       size: 2048,
       description: "Cat walking across the yard",
+      event_type: "motion",
     });
     insertRecording({
       camera: "Front_Door",
@@ -45,6 +47,7 @@ describe("recordings DB", () => {
       path: "2024-01-16/Front_Door/09-00-00.mp4",
       size: 512,
       snapshot_key: "2024-01-16/Front_Door/09-00-00.jpg",
+      // no event_type — should default to 'motion'
     });
   }
 
@@ -145,6 +148,33 @@ describe("recordings DB", () => {
     seed();
     const result = queryRecordings({ camera: "Front_Door", dateFrom: "2024-01-16" });
     expect(result.data[0].snapshot_key).toBe("2024-01-16/Front_Door/09-00-00.jpg");
+  });
+
+  it("stores and retrieves event_type", () => {
+    seed();
+    const result = queryRecordings({ camera: "Front_Door", dateFrom: "2024-01-15", dateTo: "2024-01-15" });
+    expect(result.data[0].event_type).toBe("doorbell");
+  });
+
+  it("defaults event_type to motion when not specified", () => {
+    seed();
+    const result = queryRecordings({ camera: "Front_Door", dateFrom: "2024-01-16" });
+    expect(result.data[0].event_type).toBe("motion");
+  });
+
+  it("filters by eventType doorbell", () => {
+    seed();
+    const result = queryRecordings({ eventType: "doorbell" });
+    expect(result.total).toBe(1);
+    expect(result.data[0].event_type).toBe("doorbell");
+    expect(result.data[0].camera).toBe("Front_Door");
+  });
+
+  it("filters by eventType motion", () => {
+    seed();
+    const result = queryRecordings({ eventType: "motion" });
+    expect(result.total).toBe(2);
+    expect(result.data.every((r) => r.event_type === "motion")).toBe(true);
   });
 
   it("returns empty results for no matches", () => {

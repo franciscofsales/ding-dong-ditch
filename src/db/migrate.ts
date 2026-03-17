@@ -37,6 +37,10 @@ const MIGRATIONS: Array<(db: Database.Database) => void> = [
         END;
     `);
   },
+  // Version 1 → 2: add event_type column
+  (db) => {
+    db.exec(`ALTER TABLE recordings ADD COLUMN event_type TEXT DEFAULT 'motion'`);
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

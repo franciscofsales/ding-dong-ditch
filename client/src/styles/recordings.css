@@ -229,6 +229,26 @@
   opacity: 0.7;
 }
 
+.recording-card--doorbell {
+  border-left: 3px solid var(--color-attention-fg);
+  box-shadow: 0 0 0 1px var(--color-attention-muted);
+}
+
+.recording-card__doorbell-badge {
+  position: absolute;
+  bottom: var(--space-2);
+  right: var(--space-2);
+  background: rgba(210, 153, 34, 0.85);
+  border-radius: var(--radius-full);
+  padding: 3px 6px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
 /* Recording modal */
 .recording-modal__close {
   position: absolute;
@@ -267,6 +287,23 @@
   font-size: var(--text-sm);
   color: var(--color-fg-accent);
   font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.recording-modal__event-badge {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-muted);
+}
+
+.recording-modal__event-badge--doorbell {
+  background: var(--color-attention-muted);
+  color: var(--color-attention-fg);
 }
 .recording-modal__datetime {
   font-size: var(--text-sm);

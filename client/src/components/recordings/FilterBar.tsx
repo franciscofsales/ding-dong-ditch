@@ -26,7 +26,8 @@ export default function FilterBar({
     (filters.camera ? 1 : 0) +
     (filters.dateFrom ? 1 : 0) +
     (filters.dateTo ? 1 : 0) +
-    (filters.search ? 1 : 0);
+    (filters.search ? 1 : 0) +
+    (filters.eventType ? 1 : 0);
 
   return (
     <div>
@@ -78,6 +79,20 @@ export default function FilterBar({
             </select>
           </div>
 
+          {/* Event type select */}
+          <div className="filter-bar__group">
+            <label className="filter-bar__label">Event</label>
+            <select
+              value={filters.eventType}
+              onChange={(e) => onFilterChange("eventType", e.target.value)}
+              aria-label="Filter by event type"
+            >
+              <option value="">All events</option>
+              <option value="doorbell">Doorbell</option>
+              <option value="motion">Motion only</option>
+            </select>
+          </div>
+
           {/* Date range */}
           <div className="filter-bar__group">
             <label className="filter-bar__label">From</label>
@@ -125,6 +140,12 @@ export default function FilterBar({
             <span className="chip">
               Search: "{filters.search}"
               <button className="chip__dismiss" onClick={() => { onFilterChange("search", ""); onSearchInput(""); }} aria-label="Remove search filter">&times;</button>
+            </span>
+          )}
+          {filters.eventType && (
+            <span className="chip">
+              Event: {filters.eventType === "doorbell" ? "Doorbell" : "Motion only"}
+              <button className="chip__dismiss" onClick={() => onFilterChange("eventType", "")} aria-label="Remove event type filter">&times;</button>
             </span>
           )}
           <button className="filter-bar__clear" onClick={onClearFilters}>Clear all</button>

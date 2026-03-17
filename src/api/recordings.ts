@@ -10,12 +10,13 @@ const router = Router();
 // List recordings with filtering, search, and pagination
 router.get("/", (_req: Request, res: Response) => {
   try {
-    const { camera, dateFrom, dateTo, search, limit, offset } = _req.query;
+    const { camera, dateFrom, dateTo, search, eventType, limit, offset } = _req.query;
     const result = queryRecordings({
       camera: camera as string | undefined,
       dateFrom: dateFrom as string | undefined,
       dateTo: dateTo as string | undefined,
       search: search as string | undefined,
+      eventType: eventType as string | undefined,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
     });

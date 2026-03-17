@@ -13,6 +13,7 @@ export function useRecordings() {
     dateFrom: "",
     dateTo: "",
     search: "",
+    eventType: "",
   });
   const [searchInput, setSearchInput] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +42,7 @@ export function useRecordings() {
       if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
       if (filters.dateTo) params.set("dateTo", filters.dateTo);
       if (filters.search) params.set("search", filters.search);
+      if (filters.eventType) params.set("eventType", filters.eventType);
       params.set("limit", String(PAGE_SIZE));
       params.set("offset", String(page * PAGE_SIZE));
 
@@ -72,7 +74,7 @@ export function useRecordings() {
   }, []);
 
   const clearFilters = useCallback(() => {
-    setFilters({ camera: "", dateFrom: "", dateTo: "", search: "" });
+    setFilters({ camera: "", dateFrom: "", dateTo: "", search: "", eventType: "" });
     setSearchInput("");
     setPage(0);
   }, []);
@@ -108,7 +110,7 @@ export function useRecordings() {
     [loadRecordings],
   );
 
-  const hasActiveFilters = filters.camera || filters.dateFrom || filters.dateTo || filters.search;
+  const hasActiveFilters = filters.camera || filters.dateFrom || filters.dateTo || filters.search || filters.eventType;
 
   const grouped = useMemo(() => {
     const map = new Map<string, Recording[]>();

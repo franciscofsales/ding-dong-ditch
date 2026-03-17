@@ -92,7 +92,7 @@ function subscribe(): void {
     if (cam.onDoorbellPressed) {
       const sub = cam.onDoorbellPressed.subscribe(() => {
         log.info(`[evt] ${cam.name}: doorbell pressed`);
-        handleMotion(cam);
+        handleMotion(cam, 'doorbell');
       });
       subscriptions.push(sub);
     }

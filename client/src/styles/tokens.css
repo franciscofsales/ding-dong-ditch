@@ -17,6 +17,8 @@
   --color-danger-fg: #f85149;
   --color-danger-muted: rgba(218, 54, 51, 0.15);
   --color-success-muted: rgba(35, 134, 54, 0.15);
+  --color-attention-fg: #d29922;
+  --color-attention-muted: rgba(210, 153, 34, 0.15);
 
   /* Spacing (4px base) */
   --space-1: 4px;

@@ -19,7 +19,7 @@ function getState(camId: number): CameraState {
   return state.get(camId)!;
 }
 
-export async function handleMotion(cam: RingCamera): Promise<void> {
+export async function handleMotion(cam: RingCamera, eventType: 'motion' | 'doorbell' = 'motion'): Promise<void> {
   const s = getState(cam.id);
   const cfg = getCameraConfig(cam.id);
   const now = Date.now();
@@ -41,7 +41,7 @@ export async function handleMotion(cam: RingCamera): Promise<void> {
     : Promise.resolve(undefined);
 
   try {
-    await recordClip(cam, cfg.recordingDuration, snapshot?.key, descriptionPromise);
+    await recordClip(cam, cfg.recordingDuration, snapshot?.key, descriptionPromise, eventType);
   } catch (e) {
     log.error(`[rec] ${cam.name}: error:`, (e as Error).message);
   } finally {

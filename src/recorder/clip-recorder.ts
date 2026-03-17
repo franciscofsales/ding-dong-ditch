@@ -23,7 +23,7 @@ function tempPath(cameraName: string): { filePath: string; key: string } {
   return { filePath, key };
 }
 
-export async function recordClip(cam: RingCamera, durationSeconds: number, snapshotKey?: string | null, descriptionPromise?: Promise<string | undefined>): Promise<void> {
+export async function recordClip(cam: RingCamera, durationSeconds: number, snapshotKey?: string | null, descriptionPromise?: Promise<string | undefined>, eventType: string = 'motion'): Promise<void> {
   const { filePath, key } = tempPath(cam.name);
   log.info(`[rec] ${cam.name}: recording ${durationSeconds}s → ${key}`);
 
@@ -66,6 +66,7 @@ export async function recordClip(cam: RingCamera, durationSeconds: number, snaps
         size,
         snapshot_key: snapshotKey ?? null,
         description: description ?? null,
+        event_type: eventType,
       });
     } catch (e) {
       log.error(`[rec] ${cam.name}: failed to insert DB row: ${(e as Error).message}`);

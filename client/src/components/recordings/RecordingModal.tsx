@@ -104,7 +104,12 @@ export default function RecordingModal({ recording, onClose, onDelete }: Recordi
         </div>
 
         <div className="recording-modal__details">
-          <div className="recording-modal__camera">{recording.camera}</div>
+          <div className="recording-modal__camera">
+            {recording.camera}
+            <span className={`recording-modal__event-badge${recording.event_type === 'doorbell' ? " recording-modal__event-badge--doorbell" : ""}`}>
+              {recording.event_type === 'doorbell' ? 'Doorbell ring' : 'Motion'}
+            </span>
+          </div>
           <div className="recording-modal__datetime">
             {formatFullDate(recording.date, recording.file)}
           </div>

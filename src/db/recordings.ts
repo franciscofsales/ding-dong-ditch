@@ -10,6 +10,7 @@ export interface RecordingRow {
   size: number;
   snapshot_key: string | null;
   description: string | null;
+  event_type: string | null;
   created_at: string;
 }
 
@@ -22,6 +23,7 @@ export interface RecordingInsert {
   size: number;
   snapshot_key?: string | null;
   description?: string | null;
+  event_type?: string | null;
 }
 
 export interface RecordingQuery {
@@ -29,6 +31,7 @@ export interface RecordingQuery {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+  eventType?: string;
   limit?: number;
   offset?: number;
 }
@@ -43,8 +46,8 @@ export interface PaginatedResult<T> {
 export function insertRecording(row: RecordingInsert): void {
   const db = getDb();
   const stmt = db.prepare(`
-    INSERT OR IGNORE INTO recordings (camera, date, timestamp, file, path, size, snapshot_key, description)
-    VALUES (@camera, @date, @timestamp, @file, @path, @size, @snapshot_key, @description)
+    INSERT OR IGNORE INTO recordings (camera, date, timestamp, file, path, size, snapshot_key, description, event_type)
+    VALUES (@camera, @date, @timestamp, @file, @path, @size, @snapshot_key, @description, @event_type)
   `);
   stmt.run({
     camera: row.camera,
@@ -55,6 +58,7 @@ export function insertRecording(row: RecordingInsert): void {
     size: row.size,
     snapshot_key: row.snapshot_key ?? null,
     description: row.description ?? null,
+    event_type: row.event_type ?? 'motion',
   });
 }
 
@@ -77,6 +81,10 @@ export function queryRecordings(query: RecordingQuery = {}): PaginatedResult<Rec
   if (query.dateTo) {
     conditions.push("r.date <= @dateTo");
     params.dateTo = query.dateTo;
+  }
+  if (query.eventType) {
+    conditions.push("r.event_type = @eventType");
+    params.eventType = query.eventType;
   }
 
   let joinClause = "";

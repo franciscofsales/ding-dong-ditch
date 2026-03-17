@@ -8,6 +8,7 @@ export interface Recording {
   size: number;
   snapshot_key: string | null;
   description: string | null;
+  event_type: string | null;
   created_at?: string;
 }
 
@@ -23,4 +24,5 @@ export interface RecordingFilters {
   dateFrom: string;
   dateTo: string;
   search: string;
+  eventType: string;
 }

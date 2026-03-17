@@ -108,13 +108,16 @@ MQTT_BROKER=mqtt://emqx:1883
 Then uncomment the MQTT environment variables in `docker-compose.yml` and ensure the container can reach the broker network.
 
 Each Ring camera automatically appears in HA as:
-- **Sensor** (`sensor.dingdongditch_<camera>_last_recording`) -- updates with each new recording timestamp and attributes (including `description` when AI is enabled)
+- **Sensor** (`sensor.dingdongditch_<camera>_last_recording`) -- updates with each new recording timestamp and attributes (including `description` when AI is enabled, and `event_type`)
 - **Device trigger** -- fires on each recording, usable in automations
 
-Example automation for mobile notifications (with AI description and snapshot image):
+### MQTT event payload
+
+Every published event includes an `event_type` field (`"motion"` or `"doorbell"`) alongside the standard recording attributes, so you can branch Home Assistant automations on what actually happened:
+
 ```yaml
 alias: "DingDongDitch Recording Alert"
-description: "Send a push notification with snapshot when a new Ring recording is saved"
+description: "Push notification for all recording events, with doorbell callout"
 mode: single
 triggers:
   - trigger: state
@@ -123,12 +126,29 @@ conditions: []
 actions:
   - action: notify.mobile_app
     data:
-      title: "Motion: {{ trigger.to_state.attributes.camera }}"
+      title: >
+        {% if trigger.to_state.attributes.event_type == 'doorbell' %}
+          Doorbell: {{ trigger.to_state.attributes.camera }}
+        {% else %}
+          Motion: {{ trigger.to_state.attributes.camera }}
+        {% endif %}
       message: "{{ trigger.to_state.attributes.description | default('Recording saved') }}"
       data:
         image: "https://your-host{{ trigger.to_state.attributes.snapshot_url }}"
         url: "https://your-host{{ trigger.to_state.attributes.url }}"
 ```
+
+### MQTT event filter
+
+You can control which event types are published to MQTT from the **Settings** tab in the web UI, under **Home Assistant Notifications**. Choose from:
+
+| Setting | Publishes |
+|---------|-----------|
+| All events (default) | Every recording — motion and doorbell |
+| Doorbell only | Only doorbell presses |
+| Motion only | Only passive motion detections |
+
+This lets you tune which events generate phone notifications without changing your Home Assistant automations.
 
 A snapshot is captured at the moment of motion (before recording starts) so the notification image shows what triggered the event. When AI descriptions are enabled, the notification message will contain what the camera saw (e.g., "A person approaching the front door"). Tapping the notification opens the full recording.
 

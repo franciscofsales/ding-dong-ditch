@@ -32,6 +32,7 @@ describe("config/store", () => {
       recordingDuration: 120,
       cooldownSeconds: 20,
       retentionDays: 30,
+      mqttEventFilter: 'all',
     });
   });
 
@@ -60,7 +61,7 @@ describe("config/store", () => {
 
   it("updateConfig merges partial updates", async () => {
     const store = await loadStore();
-    store.updateConfig({ defaults: { recordingDuration: 60, cooldownSeconds: 10, retentionDays: 7 } });
+    store.updateConfig({ defaults: { recordingDuration: 60, cooldownSeconds: 10, retentionDays: 7, mqttEventFilter: 'all' } });
     const cfg = store.getConfig();
     expect(cfg.defaults.recordingDuration).toBe(60);
     expect(cfg.defaults.retentionDays).toBe(7);

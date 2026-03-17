@@ -1,4 +1,5 @@
 import mqtt from "mqtt";
+import { getConfig } from "../config/store.js";
 import { log } from "../logger.js";
 
 const ENABLED = process.env.MQTT_ENABLED === "true";
@@ -20,6 +21,7 @@ export interface RecordingEvent {
   url: string;
   snapshot_url: string | null;
   description?: string;
+  event_type: string;
 }
 
 export function initMqtt(): void {
@@ -135,6 +137,12 @@ export function publishDiscovery(camera: string): void {
 export function publishRecording(event: RecordingEvent): void {
   if (!client?.connected) return;
 
+  const filter = getConfig().defaults.mqttEventFilter ?? 'all';
+  if (filter !== 'all' && event.event_type !== filter) {
+    log.info(`[mqtt] skipping ${event.event_type} event (filter: ${filter}): ${event.path}`);
+    return;
+  }
+
   const id = safeName(event.camera);
 
   // Ensure discovery is published for this camera
@@ -146,5 +154,5 @@ export function publishRecording(event: RecordingEvent): void {
     { qos: 1 },
   );
 
-  log.info(`[mqtt] published recording event: ${event.path}`);
+  log.info(`[mqtt] published ${event.event_type} recording event: ${event.path}`);
 }

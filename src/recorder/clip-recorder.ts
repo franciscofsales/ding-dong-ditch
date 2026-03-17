@@ -80,6 +80,7 @@ export async function recordClip(cam: RingCamera, durationSeconds: number, snaps
       timestamp,
       url: `/api/recordings/${key}`,
       snapshot_url: snapshotKey ? `/api/recordings/${snapshotKey}` : null,
+      event_type: eventType,
       ...(description ? { description } : {}),
     });
   } finally {

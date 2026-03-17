@@ -2,6 +2,7 @@ export interface DefaultsConfig {
   recordingDuration: number;
   cooldownSeconds: number;
   retentionDays: number;
+  mqttEventFilter: 'all' | 'motion' | 'doorbell';
 }
 
 export interface CameraConfig {

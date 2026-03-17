@@ -12,6 +12,7 @@ const DEFAULT_CONFIG: AppConfig = {
     recordingDuration: 120,
     cooldownSeconds: 20,
     retentionDays: 30,
+    mqttEventFilter: 'all' as const,
   },
 };
 

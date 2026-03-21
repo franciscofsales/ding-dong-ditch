@@ -3,6 +3,7 @@ import { initTestDb, closeDb } from "./index.js";
 import {
   insertRecording,
   queryRecordings,
+  countRecordingsByType,
   deleteRecordingByPath,
   deleteRecordingsOlderThan,
   getDistinctCameras,
@@ -181,5 +182,39 @@ describe("recordings DB", () => {
     seed();
     const rec = getRecordingByPath("does/not/exist.mp4");
     expect(rec).toBeNull();
+  });
+
+  describe("countRecordingsByType", () => {
+    it("returns correct counts for all types", () => {
+      seed();
+      const counts = countRecordingsByType("Front_Door", "2024-01-01T00:00:00", "2024-12-31T23:59:59");
+      expect(counts.total).toBe(2);
+      expect(counts.doorbell).toBe(1);
+      expect(counts.motion).toBe(1);
+    });
+
+    it("returns zeros for no matches", () => {
+      seed();
+      const counts = countRecordingsByType("Nonexistent", "2024-01-01T00:00:00", "2024-12-31T23:59:59");
+      expect(counts.total).toBe(0);
+      expect(counts.motion).toBe(0);
+      expect(counts.doorbell).toBe(0);
+    });
+
+    it("respects time range", () => {
+      seed();
+      const counts = countRecordingsByType("Front_Door", "2024-01-16T00:00:00", "2024-01-16T23:59:59");
+      expect(counts.total).toBe(1);
+      expect(counts.motion).toBe(1);
+      expect(counts.doorbell).toBe(0);
+    });
+
+    it("counts across cameras correctly", () => {
+      seed();
+      const counts = countRecordingsByType("Back_Yard", "2024-01-01T00:00:00", "2024-12-31T23:59:59");
+      expect(counts.total).toBe(1);
+      expect(counts.motion).toBe(1);
+      expect(counts.doorbell).toBe(0);
+    });
   });
 });

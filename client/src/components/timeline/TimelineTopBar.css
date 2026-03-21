@@ -36,6 +36,14 @@
   color: var(--color-fg-default);
 }
 
+<<<<<<< HEAD
+=======
+.timeline-top-bar__event-btn:focus-visible {
+  outline: 2px solid var(--color-fg-accent);
+  outline-offset: 2px;
+}
+
+>>>>>>> worktree-agent-a9988c41
 .timeline-top-bar__event-btn--active {
   background: var(--color-accent-muted);
   border-color: var(--color-fg-accent);
@@ -68,9 +76,15 @@
   transition: border-color var(--duration-fast) var(--ease-default);
 }
 
+<<<<<<< HEAD
 .timeline-top-bar__camera-select:focus {
   outline: 2px solid var(--color-fg-accent);
   outline-offset: 1px;
+=======
+.timeline-top-bar__camera-select:focus-visible {
+  outline: 2px solid var(--color-fg-accent);
+  outline-offset: 2px;
+>>>>>>> worktree-agent-a9988c41
 }
 
 /* Time range preset buttons */
@@ -91,6 +105,14 @@
   color: var(--color-fg-default);
 }
 
+<<<<<<< HEAD
+=======
+.timeline-top-bar__time-btn:focus-visible {
+  outline: 2px solid var(--color-fg-accent);
+  outline-offset: 2px;
+}
+
+>>>>>>> worktree-agent-a9988c41
 .timeline-top-bar__time-btn--active {
   background: var(--color-bg-subtle);
   border-color: var(--color-fg-accent);

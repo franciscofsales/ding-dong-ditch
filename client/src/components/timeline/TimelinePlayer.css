@@ -90,6 +90,15 @@
   background: var(--color-bg-subtle);
 }
 
+<<<<<<< HEAD
+=======
+.timeline-player__nav:focus-visible {
+  outline: 2px solid var(--color-fg-accent);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+>>>>>>> worktree-agent-a9988c41
 .timeline-player__nav--prev {
   left: var(--space-3);
 }
@@ -160,6 +169,14 @@
   border-color: var(--color-danger-fg);
 }
 
+<<<<<<< HEAD
+=======
+.timeline-player__delete:focus-visible {
+  outline: 2px solid var(--color-fg-accent);
+  outline-offset: 2px;
+}
+
+>>>>>>> worktree-agent-a9988c41
 .timeline-player__meta-secondary {
   display: flex;
   align-items: center;

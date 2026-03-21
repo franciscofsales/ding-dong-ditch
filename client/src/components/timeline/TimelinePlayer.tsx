@@ -53,7 +53,7 @@ export default function TimelinePlayer({
 
   if (!recording) {
     return (
-      <div className="timeline-player">
+      <div className="timeline-player" role="region" aria-label="Video player">
         <div className="timeline-player__empty">
           Select a recording from the timeline below
         </div>
@@ -63,7 +63,7 @@ export default function TimelinePlayer({
 
   if (error) {
     return (
-      <div className="timeline-player">
+      <div className="timeline-player" role="region" aria-label="Video player">
         <div className="timeline-player__error">
           <svg
             width="32"
@@ -86,7 +86,7 @@ export default function TimelinePlayer({
   }
 
   return (
-    <div className="timeline-player">
+    <div className="timeline-player" role="region" aria-label="Video player">
       <div className="timeline-player__video-wrapper">
         <video
           ref={videoRef}

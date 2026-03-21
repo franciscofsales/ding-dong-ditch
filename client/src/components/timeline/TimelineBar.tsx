@@ -235,7 +235,7 @@ export default function TimelineBar({
   );
 
   return (
-    <div className="timeline-bar" ref={containerRef} onClick={handleBarClick}>
+    <div className="timeline-bar" ref={containerRef} onClick={handleBarClick} role="region" aria-label="Recording timeline">
       <div
         className={`timeline-bar__scroll${isDragging ? " timeline-bar__scroll--dragging" : ""}`}
         ref={scrollRef}

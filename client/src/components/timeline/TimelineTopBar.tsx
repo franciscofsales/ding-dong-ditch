@@ -64,18 +64,24 @@ export default function TimelineTopBar({
           <button
             className={`timeline-top-bar__event-btn${eventType === "" ? " timeline-top-bar__event-btn--active" : ""}`}
             onClick={() => onEventTypeChange("")}
+            aria-label={`Filter by all events${counts ? `, ${counts.total} total` : ""}`}
+            aria-pressed={eventType === ""}
           >
             All{counts ? ` \u00B7 ${counts.total}` : ""}
           </button>
           <button
             className={`timeline-top-bar__event-btn timeline-top-bar__event-btn--doorbell${eventType === "doorbell" ? " timeline-top-bar__event-btn--active" : ""}`}
             onClick={() => onEventTypeChange("doorbell")}
+            aria-label={`Filter by doorbell events${counts ? `, ${counts.doorbell} total` : ""}`}
+            aria-pressed={eventType === "doorbell"}
           >
             Doorbell{counts ? ` \u00B7 ${counts.doorbell}` : ""}
           </button>
           <button
             className={`timeline-top-bar__event-btn timeline-top-bar__event-btn--motion${eventType === "motion" ? " timeline-top-bar__event-btn--active" : ""}`}
             onClick={() => onEventTypeChange("motion")}
+            aria-label={`Filter by motion events${counts ? `, ${counts.motion} total` : ""}`}
+            aria-pressed={eventType === "motion"}
           >
             Motion{counts ? ` \u00B7 ${counts.motion}` : ""}
           </button>
@@ -105,6 +111,8 @@ export default function TimelineTopBar({
               key={value}
               className={`timeline-top-bar__time-btn${timePreset === value ? " timeline-top-bar__time-btn--active" : ""}`}
               onClick={() => onTimePresetChange(value)}
+              aria-label={`Show ${label.toLowerCase()}`}
+              aria-pressed={timePreset === value}
             >
               {label}
             </button>

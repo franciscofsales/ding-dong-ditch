@@ -1,89 +1,162 @@
 import { useEffect, useRef, useState } from "react";
-import type { Recording } from "../../types/recording";
-import ConfirmDialog from "../ConfirmDialog";
+import type { TimelineRecording } from "../../types/timeline";
+import "./TimelinePlayer.css";
 
 interface TimelinePlayerProps {
-  recording: Recording;
-  onDelete: (path: string) => void;
+  recording: TimelineRecording | null;
+  onPrevious: () => void;
+  onNext: () => void;
+  onDelete: (recording: TimelineRecording) => void;
 }
 
-function formatTime(file: string): string {
-  return file.replace(".mp4", "").replace(/-/g, ":");
-}
-
-function formatSize(bytes: number): string {
-  return (bytes / 1024 / 1024).toFixed(1) + " MB";
-}
-
-function formatFullDate(dateStr: string, file: string): string {
-  const date = new Date(dateStr + "T12:00:00");
-  const formatted = new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
+function formatTimestamp(ts: string): string {
+  const date = new Date(ts);
+  const datePart = new Intl.DateTimeFormat("en-US", {
+    month: "short",
     day: "numeric",
+    year: "numeric",
   }).format(date);
-  return `${formatted} at ${formatTime(file)}`;
+  const timePart = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+  return `${datePart} at ${timePart}`;
 }
 
-export default function TimelinePlayer({ recording, onDelete }: TimelinePlayerProps) {
+/**
+ * Extract camera name from path format: "YYYY-MM-DD/camera_name/HH-MM-SS.mp4"
+ */
+function extractCameraName(path: string): string {
+  const parts = path.split("/");
+  if (parts.length >= 3) {
+    return parts[1].replace(/_/g, " ");
+  }
+  return "Unknown camera";
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function eventLabel(eventType: string): string {
+  switch (eventType) {
+    case "doorbell":
+      return "Doorbell ring";
+    case "motion":
+      return "Motion";
+    default:
+      return eventType;
+  }
+}
+
+export default function TimelinePlayer({
+  recording,
+  onPrevious,
+  onNext,
+  onDelete,
+}: TimelinePlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoError, setVideoError] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    setVideoError(false);
-    if (videoRef.current) {
+    setError(false);
+    if (recording && videoRef.current) {
       videoRef.current.load();
+      videoRef.current.play().catch(() => {
+        // autoplay may be blocked by browser policy; controls remain available
+      });
     }
-  }, [recording.path]);
+  }, [recording?.path]);
 
-  const isDoorbell = recording.event_type === "doorbell";
+  if (!recording) {
+    return (
+      <div className="timeline-player">
+        <div className="timeline-player__empty">
+          Select a recording from the timeline below
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="timeline-player">
+        <div className="timeline-player__error">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          Failed to load video
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="timeline-player">
-      <div className="timeline-player__video-container">
-        {videoError ? (
-          <div className="timeline-player__error">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4m0 4h.01" />
-            </svg>
-            <p>Unable to load video</p>
-          </div>
-        ) : (
-          <video
-            ref={videoRef}
-            controls
-            autoPlay
-            playsInline
-            src={`/api/recordings/${recording.path}`}
-            onError={() => setVideoError(true)}
-          />
-        )}
+      <div className="timeline-player__video-wrapper">
+        <video
+          ref={videoRef}
+          controls
+          playsInline
+          src={`/api/recordings/${recording.path}`}
+          onError={() => setError(true)}
+        />
+        <button
+          className="timeline-player__nav timeline-player__nav--prev"
+          onClick={onPrevious}
+          aria-label="Previous recording"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <button
+          className="timeline-player__nav timeline-player__nav--next"
+          onClick={onNext}
+          aria-label="Next recording"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
       </div>
 
-      <div className="timeline-player__details">
-        <div className="timeline-player__camera">
-          {recording.camera}
-          <span
-            className={`timeline-player__event-badge${isDoorbell ? " timeline-player__event-badge--doorbell" : ""}`}
-          >
-            {isDoorbell ? "Doorbell ring" : "Motion"}
+      <div className="timeline-player__meta">
+        <div className="timeline-player__meta-primary">
+          <span className="timeline-player__camera">
+            {extractCameraName(recording.path)}
           </span>
-        </div>
-        <div className="timeline-player__datetime">
-          {formatFullDate(recording.date, recording.file)}
-        </div>
-        {recording.description && (
-          <div className="timeline-player__description">{recording.description}</div>
-        )}
-        <div className="timeline-player__footer">
-          <span className="timeline-player__size">{formatSize(recording.size)}</span>
+          <span
+            className={`timeline-player__event-badge${
+              recording.event_type === "doorbell"
+                ? " timeline-player__event-badge--doorbell"
+                : ""
+            }`}
+          >
+            {eventLabel(recording.event_type)}
+          </span>
+          {recording.size != null && (
+            <span className="timeline-player__size">
+              {formatFileSize(recording.size)}
+            </span>
+          )}
           <button
-            className="btn btn-danger"
-            onClick={() => setShowDeleteConfirm(true)}
-            aria-label="Delete this recording"
+            className="timeline-player__delete"
+            onClick={() => onDelete(recording)}
+            aria-label="Delete recording"
           >
             <svg
               width="16"
@@ -97,25 +170,19 @@ export default function TimelinePlayer({ recording, onDelete }: TimelinePlayerPr
             >
               <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-            Delete
           </button>
         </div>
+        <div className="timeline-player__meta-secondary">
+          <span className="timeline-player__timestamp">
+            {formatTimestamp(recording.timestamp)}
+          </span>
+          {recording.description && (
+            <span className="timeline-player__description">
+              {recording.description}
+            </span>
+          )}
+        </div>
       </div>
-
-      {showDeleteConfirm && (
-        <ConfirmDialog
-          title="Delete recording"
-          message="Delete this recording? This cannot be undone."
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
-          danger
-          onConfirm={() => {
-            setShowDeleteConfirm(false);
-            onDelete(recording.path);
-          }}
-          onCancel={() => setShowDeleteConfirm(false)}
-        />
-      )}
     </div>
   );
 }

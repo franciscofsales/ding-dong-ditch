@@ -8,7 +8,7 @@ export interface RecordingCounts {
   total: number;
 }
 
-const CAMERA_STORAGE_KEY = "timeline-selected-camera";
+export const CAMERA_STORAGE_KEY = "timeline-selected-camera";
 
 function computeTimeRange(preset: TimePreset): TimeRange {
   const to = new Date();

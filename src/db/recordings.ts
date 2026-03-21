@@ -142,6 +142,67 @@ export function getRecordingsWithoutDescription(limit: number): RecordingRow[] {
     .all(limit) as RecordingRow[];
 }
 
+export interface TimelineRecording {
+  id: number;
+  timestamp: string;
+  event_type: string | null;
+  snapshot_key: string | null;
+  path: string;
+}
+
+export function queryTimelineRecordings(
+  camera: string,
+  from: string,
+  to: string,
+  eventType?: string
+): TimelineRecording[] {
+  const db = getDb();
+  const conditions: string[] = [
+    "camera = @camera",
+    "timestamp >= @from",
+    "timestamp <= @to",
+  ];
+  const params: Record<string, string> = { camera, from, to };
+
+  if (eventType) {
+    conditions.push("event_type = @eventType");
+    params.eventType = eventType;
+  }
+
+  const whereClause = `WHERE ${conditions.join(" AND ")}`;
+  return db
+    .prepare(
+      `SELECT id, timestamp, event_type, snapshot_key, path FROM recordings ${whereClause} ORDER BY timestamp ASC`
+    )
+    .all(params) as TimelineRecording[];
+}
+
+export interface RecordingCounts {
+  motion: number;
+  doorbell: number;
+  total: number;
+}
+
+export function countRecordingsByType(
+  camera: string,
+  from: string,
+  to: string
+): RecordingCounts {
+  const db = getDb();
+  const row = db
+    .prepare(
+      `SELECT
+        COUNT(*) AS total,
+        COUNT(CASE WHEN event_type = 'motion' THEN 1 END) AS motion,
+        COUNT(CASE WHEN event_type = 'doorbell' THEN 1 END) AS doorbell
+      FROM recordings
+      WHERE camera = @camera AND timestamp >= @from AND timestamp <= @to`
+    )
+    .get({ camera, from, to }) as { total: number; motion: number; doorbell: number };
+
+  return { motion: row.motion, doorbell: row.doorbell, total: row.total };
+}
+
 export function updateRecordingDescription(
   id: number,
   description: string,

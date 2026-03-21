@@ -5,3 +5,5 @@ dist/
 .env
 *.mp4
 clips/
+prd/
+worktrees/

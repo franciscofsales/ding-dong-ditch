@@ -1,4 +1,4 @@
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo, useCallback, useEffect, useState } from "react";
 import "./TimelineBar.css";
 
 export interface TimelineRecording {
@@ -123,6 +123,9 @@ function getNowPosition(timeRange: TimeRange): number | null {
   return ((now - fromMs) / (toMs - fromMs)) * 100;
 }
 
+/** Pixels per hour of timeline — controls zoom / density */
+const PIXELS_PER_HOUR = 120;
+
 export default function TimelineBar({
   timeRange,
   recordings = [],
@@ -130,6 +133,13 @@ export default function TimelineBar({
   onSelect,
 }: TimelineBarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef<{ active: boolean; startX: number; startScroll: number }>({
+    active: false,
+    startX: 0,
+    startScroll: 0,
+  });
+  const [isDragging, setIsDragging] = useState(false);
 
   const markers = useMemo(() => computeMarkers(timeRange), [timeRange]);
   const nowPosition = useMemo(() => getNowPosition(timeRange), [timeRange]);
@@ -137,10 +147,65 @@ export default function TimelineBar({
   const rangeMs = timeRange.to.getTime() - timeRange.from.getTime();
   const fromMs = timeRange.from.getTime();
 
+  const rangeHours = rangeMs / (1000 * 60 * 60);
+  const trackWidth = Math.max(rangeHours * PIXELS_PER_HOUR, 100);
+
   const blockLayouts = useMemo(() => {
-    const width = containerRef.current?.clientWidth ?? 1000;
-    return computeBlockLayouts(recordings, rangeMs, fromMs, width);
-  }, [recordings, rangeMs, fromMs]);
+    return computeBlockLayouts(recordings, rangeMs, fromMs, trackWidth);
+  }, [recordings, rangeMs, fromMs, trackWidth]);
+
+  // Convert vertical mouse wheel to horizontal scroll
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      // If there's meaningful horizontal delta already, let it through
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // Drag-to-pan handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Don't initiate drag on recording block clicks
+    if ((e.target as HTMLElement).closest(".timeline-bar__block")) return;
+
+    const el = scrollRef.current;
+    if (!el) return;
+
+    dragState.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft };
+    setIsDragging(true);
+  }, []);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragState.current.active) return;
+      const el = scrollRef.current;
+      if (!el) return;
+
+      const dx = e.clientX - dragState.current.startX;
+      el.scrollLeft = dragState.current.startScroll - dx;
+    };
+
+    const onMouseUp = () => {
+      if (!dragState.current.active) return;
+      dragState.current.active = false;
+      setIsDragging(false);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
 
   const handleBarClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -154,7 +219,12 @@ export default function TimelineBar({
 
   return (
     <div className="timeline-bar" ref={containerRef} onClick={handleBarClick}>
-      <div className="timeline-bar__track">
+      <div
+        className={`timeline-bar__scroll${isDragging ? " timeline-bar__scroll--dragging" : ""}`}
+        ref={scrollRef}
+        onMouseDown={handleMouseDown}
+      >
+      <div className="timeline-bar__track" style={{ width: `${trackWidth}px` }}>
         {/* Time markers */}
         {markers.map((marker, i) => (
           <div
@@ -207,6 +277,7 @@ export default function TimelineBar({
             <div className="timeline-bar__scrubber" style={{ left: `${pos}%` }} />
           );
         })()}
+      </div>
       </div>
     </div>
   );

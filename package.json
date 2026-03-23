@@ -9,7 +9,7 @@
     "dev:client": "cd client && npx vite --port 5173",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --config vitest.config.ts && cd client && npx vitest run --config vitest.config.ts",
+    "test": "vitest run --config vitest.config.ts && cd client && npx vitest run",
     "test:watch": "vitest --config vitest.config.ts",
     "test:coverage": "vitest run --config vitest.config.ts --coverage"
   },

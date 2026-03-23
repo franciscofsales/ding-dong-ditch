@@ -30,7 +30,16 @@ export function useTimeline() {
   const [timeRange, setTimeRange] = useState<TimeRange>(() => computeTimeRange("24h"));
   const [recordings, setRecordings] = useState<TimelineRecording[]>([]);
   const [counts, setCounts] = useState<RecordingCounts>({ motion: 0, doorbell: 0, total: 0 });
-  const [selectedRecording, setSelectedRecording] = useState<TimelineRecording | null>(null);
+  const [selectedRecording, setSelectedRecordingState] = useState<TimelineRecording | null>(null);
+  const [seekRatio, setSeekRatio] = useState<number | null>(null);
+
+  const setSelectedRecording = useCallback(
+    (recording: TimelineRecording | null, ratio?: number) => {
+      setSelectedRecordingState(recording);
+      setSeekRatio(ratio ?? null);
+    },
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -158,6 +167,7 @@ export function useTimeline() {
     error,
     selectedRecording,
     setSelectedRecording,
+    seekRatio,
     timeRange,
     setTimeRange,
     timePreset,

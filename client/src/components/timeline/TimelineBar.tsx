@@ -21,6 +21,12 @@ interface TimelineBarProps {
   selectedRecordingId?: number | null;
   onSelect?: (recording: TimelineRecording | null, seekRatio?: number) => void;
   centeredRecordingId?: number | null;
+  /** Data URL of the thumbnail to show in the hover tooltip */
+  thumbnailUrl?: string | null;
+  /** Whether the thumbnail is currently loading */
+  thumbnailLoading?: boolean;
+  /** Called when hover position changes over a recording */
+  onHoverRecording?: (recording: TimelineRecording | null, offsetRatio: number) => void;
 }
 
 interface TimeMarker {
@@ -155,6 +161,9 @@ export default function TimelineBar({
   selectedRecordingId,
   onSelect,
   centeredRecordingId,
+  thumbnailUrl,
+  thumbnailLoading,
+  onHoverRecording,
 }: TimelineBarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -280,7 +289,16 @@ export default function TimelineBar({
       const pixelX = getTrackPixelX(e.clientX);
       if (pixelX !== null) {
         setHoverX(pixelX);
-        setHoverTimestamp(pixelToTime(pixelX, trackWidth, timeRange));
+        const ts = pixelToTime(pixelX, trackWidth, timeRange);
+        setHoverTimestamp(ts);
+        if (onHoverRecording) {
+          const hit = hitTestRecording(ts, recordings);
+          if (hit && hit.offsetRatio > 0) {
+            onHoverRecording(hit.recording, hit.offsetRatio);
+          } else {
+            onHoverRecording(null, 0);
+          }
+        }
       }
 
       if (!scrubState.current.active) return;
@@ -578,9 +596,20 @@ export default function TimelineBar({
             style={{ left: `${hoverPosition}%` }}
           >
             {hoverTimestamp !== null && (
-              <span className="timeline-bar__hover-tooltip">
-                {formatTooltipTime(hoverTimestamp, rangeMs)}
-              </span>
+              <div className="timeline-bar__hover-tooltip">
+                {(thumbnailUrl || thumbnailLoading) && (
+                  <div className="timeline-bar__hover-thumbnail">
+                    {thumbnailUrl ? (
+                      <img src={thumbnailUrl} alt="" width={160} height={90} />
+                    ) : (
+                      <div className="timeline-bar__hover-thumbnail-loading" />
+                    )}
+                  </div>
+                )}
+                <span className="timeline-bar__hover-tooltip-time">
+                  {formatTooltipTime(hoverTimestamp, rangeMs)}
+                </span>
+              </div>
             )}
           </div>
         )}

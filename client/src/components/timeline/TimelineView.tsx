@@ -1,10 +1,17 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useTimeline } from "../../hooks/useTimeline";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
+import { useThumbnailVideo } from "../../hooks/useThumbnailVideo";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { captureFrame } from "../../utils/captureFrame";
+import { ThumbnailCache } from "../../utils/thumbnailCache";
+import type { TimelineRecording } from "./TimelineBar";
 import TimelineTopBar from "./TimelineTopBar";
 import TimelinePlayer from "./TimelinePlayer";
 import "./TimelinePlayer.css";
 import TimelineBar from "./TimelineBar";
+
+const thumbCache = new ThumbnailCache(50);
 
 function parseHashRecordingId(): number | null {
   const qs = window.location.hash.split("?")[1] || "";
@@ -66,6 +73,53 @@ export default function TimelineView() {
     hasAutoJumpedRef.current = true;
     setSelectedRecording(latestRecording);
   }, [loading, recordings, latestRecording, setSelectedRecording]);
+
+  // Thumbnail preview state
+  const [hoverRecording, setHoverRecording] = useState<{ recording: TimelineRecording; offsetRatio: number } | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
+
+  const debouncedHover = useDebouncedValue(hoverRecording, 150);
+
+  const { requestFrame, videoElement, isReady } = useThumbnailVideo({
+    onFrameReady: useCallback((video: HTMLVideoElement) => {
+      const dataUrl = captureFrame(video);
+      if (dataUrl && debouncedHover) {
+        const key = ThumbnailCache.makeKey(debouncedHover.recording.path, debouncedHover.offsetRatio);
+        thumbCache.set(key, dataUrl);
+        setThumbnailUrl(dataUrl);
+      }
+      setThumbnailLoading(false);
+    }, [debouncedHover]),
+  });
+
+  // When debounced hover changes, request a thumbnail frame
+  useEffect(() => {
+    if (!debouncedHover) {
+      setThumbnailUrl(null);
+      setThumbnailLoading(false);
+      return;
+    }
+
+    const key = ThumbnailCache.makeKey(debouncedHover.recording.path, debouncedHover.offsetRatio);
+    const cached = thumbCache.get(key);
+    if (cached) {
+      setThumbnailUrl(cached);
+      setThumbnailLoading(false);
+      return;
+    }
+
+    setThumbnailLoading(true);
+    requestFrame(debouncedHover.recording.path, debouncedHover.offsetRatio);
+  }, [debouncedHover, requestFrame]);
+
+  const handleHoverRecording = useCallback((recording: TimelineRecording | null, offsetRatio: number) => {
+    if (recording) {
+      setHoverRecording({ recording, offsetRatio });
+    } else {
+      setHoverRecording(null);
+    }
+  }, []);
 
   // Sync selectedRecording changes to URL hash
   useEffect(() => {
@@ -144,6 +198,9 @@ export default function TimelineView() {
         selectedRecordingId={selectedRecording?.id ?? null}
         onSelect={setSelectedRecording}
         centeredRecordingId={selectedRecording?.id ?? null}
+        thumbnailUrl={thumbnailUrl}
+        thumbnailLoading={thumbnailLoading}
+        onHoverRecording={handleHoverRecording}
       />
     </div>
   );

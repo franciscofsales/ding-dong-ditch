@@ -18,7 +18,7 @@ interface TimelineBarProps {
   timeRange: TimeRange;
   recordings?: TimelineRecording[];
   selectedRecordingId?: number | null;
-  onSelect?: (recording: TimelineRecording | null) => void;
+  onSelect?: (recording: TimelineRecording | null, seekRatio?: number) => void;
 }
 
 interface TimeMarker {
@@ -340,7 +340,11 @@ export default function TimelineBar({
               }}
               onClick={(e) => {
                 e.stopPropagation();
-                onSelect?.(rec);
+                const block = e.currentTarget as HTMLElement;
+                const rect = block.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const seekRatio = Math.max(0, Math.min(1, clickX / rect.width));
+                onSelect?.(rec, seekRatio);
               }}
               aria-label={`${eventType} event at ${new Date(rec.timestamp).toLocaleTimeString()}`}
               title={`${eventType} — ${new Date(rec.timestamp).toLocaleTimeString()}`}

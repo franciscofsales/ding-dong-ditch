@@ -29,6 +29,7 @@ export default function TimelineView() {
     counts,
     selectedRecording,
     setSelectedRecording,
+    seekRatio,
     loading,
     error,
     reload,
@@ -77,6 +78,7 @@ export default function TimelineView() {
       />
       <TimelinePlayer
         recording={selectedRecording}
+        seekRatio={seekRatio}
         onPrevious={() => {
           const idx = recordings.findIndex((r) => r.id === selectedRecording?.id);
           if (idx > 0) setSelectedRecording(recordings[idx - 1]);

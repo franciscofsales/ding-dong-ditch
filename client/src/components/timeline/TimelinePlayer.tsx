@@ -4,6 +4,7 @@ import "./TimelinePlayer.css";
 
 interface TimelinePlayerProps {
   recording: TimelineRecording | null;
+  seekRatio?: number | null;
   onPrevious: () => void;
   onNext: () => void;
   onDelete: (recording: TimelineRecording) => void;
@@ -53,22 +54,41 @@ function eventLabel(eventType: string | null): string {
 
 export default function TimelinePlayer({
   recording,
+  seekRatio,
   onPrevious,
   onNext,
   onDelete,
 }: TimelinePlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState(false);
+  const pendingSeekRatio = useRef<number | null>(null);
 
   useEffect(() => {
     setError(false);
+    pendingSeekRatio.current = seekRatio != null ? seekRatio : null;
+
     if (recording && videoRef.current) {
       videoRef.current.load();
-      videoRef.current.play().catch(() => {
-        // autoplay may be blocked by browser policy; controls remain available
-      });
+
+      const video = videoRef.current;
+      const handleLoadedMetadata = () => {
+        if (pendingSeekRatio.current != null && Number.isFinite(video.duration)) {
+          video.currentTime = video.duration * pendingSeekRatio.current;
+          pendingSeekRatio.current = null;
+        }
+        video.play().catch(() => {
+          // autoplay may be blocked by browser policy; controls remain available
+        });
+        video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      };
+
+      video.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+      return () => {
+        video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      };
     }
-  }, [recording?.path]);
+  }, [recording?.path, seekRatio]);
 
   if (!recording) {
     return (

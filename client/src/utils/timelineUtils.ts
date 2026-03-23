@@ -123,3 +123,24 @@ export function hitTestRecording(
   }
   return { recording: recordings[candidateRight], offsetRatio: 0 };
 }
+
+const ONE_HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * Format a Date for the scrub tooltip, adapting precision to zoom level.
+ * - Range < 1 hour: h:mm:ss AM/PM
+ * - Otherwise: h:mm AM/PM
+ */
+export function formatTooltipTime(date: Date, rangeMs: number): string {
+  if (rangeMs < ONE_HOUR_MS) {
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}

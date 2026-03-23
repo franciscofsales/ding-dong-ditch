@@ -1,5 +1,5 @@
 import { useRef, useMemo, useCallback, useEffect, useState } from "react";
-import { pixelToTime, hitTestRecording } from "../../utils/timelineUtils";
+import { pixelToTime, hitTestRecording, formatTooltipTime } from "../../utils/timelineUtils";
 import "./TimelineBar.css";
 
 export interface TimelineRecording {
@@ -342,6 +342,32 @@ export default function TimelineBar({
     [onSelect, recordings, trackWidth, timeRange],
   );
 
+  const handleTrackMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const trackEl = e.currentTarget;
+      const rect = trackEl.getBoundingClientRect();
+      const x = e.clientX - rect.left + trackEl.parentElement!.scrollLeft;
+      setHoverX(x);
+    },
+    [],
+  );
+
+  const handleTrackMouseLeave = useCallback(() => {
+    setHoverX(null);
+  }, []);
+
+  // Compute tooltip content and clamped position
+  const tooltip = useMemo(() => {
+    if (hoverX === null) return null;
+    const time = pixelToTime(hoverX, trackWidth, timeRange);
+    const label = formatTooltipTime(time, rangeMs);
+    // Clamp horizontally: keep tooltip within track bounds
+    // Approximate tooltip half-width ~40px
+    const halfTooltip = 40;
+    const clampedX = Math.max(halfTooltip, Math.min(hoverX, trackWidth - halfTooltip));
+    return { label, x: clampedX };
+  }, [hoverX, trackWidth, timeRange, rangeMs]);
+
   return (
     <div className="timeline-bar" ref={containerRef} onClick={handleBarClick} role="region" aria-label="Recording timeline">
       <div
@@ -420,6 +446,21 @@ export default function TimelineBar({
             style={{ left: `${hoverX}px` }}
           />
         )}
+
+        {/* Hover time tooltip */}
+        {hoverX !== null && (() => {
+          const hoverTime = pixelToTime(hoverX, trackWidth, timeRange);
+          const label = formatTooltipTime(hoverTime, rangeMs);
+          const clampedX = Math.max(30, Math.min(hoverX, trackWidth - 30));
+          return (
+            <div
+              className="timeline-bar__tooltip"
+              style={{ left: `${clampedX}px` }}
+            >
+              {label}
+            </div>
+          );
+        })()}
       </div>
       </div>
     </div>

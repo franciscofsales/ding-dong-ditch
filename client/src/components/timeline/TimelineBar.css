@@ -83,7 +83,7 @@
   top: -2px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: var(--font-weight-semibold);
   color: var(--color-danger-fg);
   letter-spacing: 0.5px;
@@ -252,7 +252,7 @@
   }
 
   .timeline-bar__marker-label {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .timeline-bar__block {
@@ -267,6 +267,6 @@
   }
 
   .timeline-bar__now::before {
-    font-size: 8px;
+    font-size: 12px;
   }
 }

@@ -27,6 +27,10 @@ interface TimelineBarProps {
   thumbnailLoading?: boolean;
   /** Called when hover position changes over a recording */
   onHoverRecording?: (recording: TimelineRecording | null, offsetRatio: number) => void;
+  /** Whether live mode is currently active */
+  isLive?: boolean;
+  /** Called when the LIVE indicator is clicked */
+  onToggleLive?: () => void;
 }
 
 interface TimeMarker {
@@ -164,6 +168,8 @@ export default function TimelineBar({
   thumbnailUrl,
   thumbnailLoading,
   onHoverRecording,
+  isLive = false,
+  onToggleLive,
 }: TimelineBarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -555,6 +561,18 @@ export default function TimelineBar({
 
   return (
     <div className="timeline-bar" ref={containerRef} onClick={handleBarClick} onKeyDown={handleKeyDown} tabIndex={0} role="region" aria-label="Recording timeline">
+      <button
+        className={`timeline-bar__live-indicator${isLive ? " timeline-bar__live-indicator--active" : ""}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleLive?.();
+        }}
+        aria-label={isLive ? "Live mode active" : "Switch to live mode"}
+        aria-pressed={isLive}
+      >
+        <span className="timeline-bar__live-dot" />
+        LIVE
+      </button>
       <div
         className={`timeline-bar__scroll${isDragging ? " timeline-bar__scroll--dragging" : ""}${isScrubbing ? " timeline-bar__scroll--scrubbing" : ""}`}
         ref={scrollRef}

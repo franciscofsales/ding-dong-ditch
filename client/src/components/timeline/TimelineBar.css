@@ -244,6 +244,64 @@
   opacity: 0.5;
 }
 
+/* LIVE indicator */
+.timeline-bar__live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm, 4px);
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-xs, 11px);
+  font-weight: var(--font-weight-semibold, 600);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  opacity: 0.6;
+  animation: live-pulse 2s ease-in-out infinite;
+  transition: opacity 0.3s, background-color 0.3s, box-shadow 0.3s, color 0.3s;
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 10;
+}
+
+.timeline-bar__live-indicator:hover {
+  opacity: 0.8;
+}
+
+.timeline-bar__live-indicator--active {
+  opacity: 1;
+  animation: none;
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.timeline-bar__live-indicator--active:hover {
+  opacity: 1;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.timeline-bar__live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  transition: background-color 0.3s;
+}
+
+.timeline-bar__live-indicator--active .timeline-bar__live-dot {
+  background: #fff;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.35; }
+}
+
 /* Responsive: compact bar on narrow screens */
 @media (max-width: 768px) {
   .timeline-bar {

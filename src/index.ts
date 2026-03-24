@@ -1,7 +1,9 @@
 import crypto from "crypto";
+import http from "http";
 import express, { type Request, type Response, type NextFunction } from "express";
 import path from "path";
 import { fileURLToPath } from "url";
+import { WebSocketServer } from "ws";
 import apiRouter from "./api/router.js";
 import { start } from "./recorder/manager.js";
 import { startCleanup } from "./recorder/cleanup.js";
@@ -88,7 +90,23 @@ app.get("*", (_req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, "client", "index.html"));
 });
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+
+// WebSocket server for live camera streams
+const LIVE_PATH_RE = /^\/api\/cameras\/[^/]+\/live$/;
+export const wss = new WebSocketServer({ noServer: true });
+
+server.on("upgrade", (request, socket, head) => {
+  if (request.url && LIVE_PATH_RE.test(request.url)) {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
+
+server.listen(PORT, () => {
   log.info(`[server] listening on :${PORT}`);
   if (UI_PASSWORD) log.info("[server] UI password protection enabled");
 });

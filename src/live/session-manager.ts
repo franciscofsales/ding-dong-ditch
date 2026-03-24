@@ -16,6 +16,7 @@ export interface LiveSession {
   startedAt: Date;
   graceTimer: NodeJS.Timeout | null;
   idleTimer: NodeJS.Timeout | null;
+  reconnectAttempted: boolean;
 }
 
 export interface SessionStatus {
@@ -70,6 +71,7 @@ export class LiveSessionManager {
       startedAt: new Date(),
       graceTimer: null,
       idleTimer: null,
+      reconnectAttempted: false,
     };
 
     this.sessions.set(cameraId, session);
@@ -82,8 +84,7 @@ export class LiveSessionManager {
     });
 
     liveCall.onCallEnded.subscribe(() => {
-      log.info(`[live] camera ${cameraId}: call ended by remote`);
-      this.cleanupSession(cameraId);
+      this.handleCallEnded(cameraId);
     });
 
     this.resetIdleTimer(session);
@@ -178,6 +179,66 @@ export class LiveSessionManager {
       if (client.readyState === 1 /* WebSocket.OPEN */) {
         client.send(data);
       }
+    }
+  }
+
+  broadcastMessage(cameraId: number, message: object): void {
+    const session = this.sessions.get(cameraId);
+    if (!session) return;
+
+    const json = JSON.stringify(message);
+    for (const client of session.clients) {
+      if (client.readyState === 1) {
+        client.send(json);
+      }
+    }
+  }
+
+  private async handleCallEnded(cameraId: number): Promise<void> {
+    const session = this.sessions.get(cameraId);
+    if (!session) return;
+
+    if (session.reconnectAttempted) {
+      log.info(`[live] camera ${cameraId}: call ended again after reconnect, giving up`);
+      this.broadcastMessage(cameraId, { type: "error", message: "Camera disconnected" });
+      this.stopSession(cameraId);
+      return;
+    }
+
+    session.reconnectAttempted = true;
+    log.info(`[live] camera ${cameraId}: call ended, attempting reconnect`);
+    this.broadcastMessage(cameraId, { type: "reconnecting" });
+
+    // Stop current pipeline
+    if (session.pipeline) {
+      session.pipeline.stop();
+      session.pipeline = null;
+    }
+
+    try {
+      const camera = this.findCamera(cameraId);
+      if (!camera) throw new Error("Camera not found");
+
+      const newLiveCall = await camera.startLiveCall();
+      session.liveCall = newLiveCall;
+
+      const newPipeline = await createFfmpegPipeline(newLiveCall);
+      session.pipeline = newPipeline;
+
+      newPipeline.onData((data: Buffer) => {
+        this.broadcastChunk(cameraId, data);
+      });
+
+      newLiveCall.onCallEnded.subscribe(() => {
+        this.handleCallEnded(cameraId);
+      });
+
+      this.broadcastMessage(cameraId, { type: "reconnected" });
+      log.info(`[live] camera ${cameraId}: reconnected successfully`);
+    } catch (err) {
+      log.error(`[live] camera ${cameraId}: reconnect failed`, err);
+      this.broadcastMessage(cameraId, { type: "error", message: "Camera disconnected" });
+      this.stopSession(cameraId);
     }
   }
 

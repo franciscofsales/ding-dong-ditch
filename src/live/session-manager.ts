@@ -3,6 +3,7 @@ import type { RingCamera } from "ring-client-api";
 import type { StreamingSession } from "ring-client-api/lib/streaming/streaming-session.js";
 import { getCameras } from "../recorder/manager.js";
 import { log } from "../logger.js";
+import { createFfmpegPipeline, type FfmpegPipeline } from "./ffmpeg-pipeline.js";
 
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 const GRACE_PERIOD_MS = 10 * 1000; // 10 seconds
@@ -11,6 +12,7 @@ export interface LiveSession {
   cameraId: number;
   clients: Set<WebSocket>;
   liveCall: StreamingSession | null;
+  pipeline: FfmpegPipeline | null;
   startedAt: Date;
   graceTimer: NodeJS.Timeout | null;
   idleTimer: NodeJS.Timeout | null;
@@ -64,6 +66,7 @@ export class LiveSessionManager {
       cameraId,
       clients: new Set(),
       liveCall,
+      pipeline: null,
       startedAt: new Date(),
       graceTimer: null,
       idleTimer: null,
@@ -71,15 +74,11 @@ export class LiveSessionManager {
 
     this.sessions.set(cameraId, session);
 
-    await liveCall.startTranscoding({
-      output: [
-        "-f", "mp4",
-        "-movflags", "frag_keyframe+empty_moov+default_base_moof",
-        "-",
-      ],
-      stdoutCallback: (data: Buffer) => {
-        this.broadcastChunk(cameraId, data);
-      },
+    const pipeline = await createFfmpegPipeline(liveCall);
+    session.pipeline = pipeline;
+
+    pipeline.onData((data: Buffer) => {
+      this.broadcastChunk(cameraId, data);
     });
 
     liveCall.onCallEnded.subscribe(() => {
@@ -152,6 +151,11 @@ export class LiveSessionManager {
     }
 
     log.info(`[live] camera ${cameraId}: stopping session`);
+
+    if (session.pipeline) {
+      session.pipeline.stop();
+      session.pipeline = null;
+    }
 
     if (session.liveCall) {
       try {

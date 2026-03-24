@@ -15,7 +15,15 @@ vi.mock("../logger.js", () => ({
   },
 }));
 
+vi.mock("./ffmpeg-pipeline.js", () => ({
+  createFfmpegPipeline: vi.fn().mockResolvedValue({
+    onData: vi.fn(),
+    stop: vi.fn(),
+  }),
+}));
+
 import { getCameras } from "../recorder/manager.js";
+import { createFfmpegPipeline } from "./ffmpeg-pipeline.js";
 
 function createMockCamera(id: number) {
   const mockLiveCall = {
@@ -63,15 +71,9 @@ describe("LiveSessionManager", () => {
       expect(session.cameraId).toBe(123);
       expect(session.clients.size).toBe(0);
       expect(session.liveCall).toBe(cam._mockLiveCall);
+      expect(session.pipeline).not.toBeNull();
       expect(cam.startLiveCall).toHaveBeenCalledOnce();
-      expect(cam._mockLiveCall.startTranscoding).toHaveBeenCalledWith({
-        output: [
-          "-f", "mp4",
-          "-movflags", "frag_keyframe+empty_moov+default_base_moof",
-          "-",
-        ],
-        stdoutCallback: expect.any(Function),
-      });
+      expect(vi.mocked(createFfmpegPipeline)).toHaveBeenCalledWith(cam._mockLiveCall);
     });
 
     it("should return existing session if already active", async () => {

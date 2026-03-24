@@ -9,16 +9,8 @@ interface TimelinePlayerProps {
   onPrevious: () => void;
   onNext: () => void;
   onDelete: (recording: TimelineRecording) => void;
-<<<<<<< HEAD
-<<<<<<< HEAD
-  isLive?: boolean;
-=======
->>>>>>> worktree-agent-a97f75f8
-  onGoLive?: () => void;
-=======
   /** When provided, shows a "Return to Live" button (live stream is paused) */
   onReturnToLive?: () => void;
->>>>>>> worktree-agent-a65d213c
 }
 
 function formatTimestamp(ts: string): string {
@@ -83,15 +75,7 @@ export default function TimelinePlayer({
   onPrevious,
   onNext,
   onDelete,
-<<<<<<< HEAD
-<<<<<<< HEAD
-  isLive = false,
-=======
->>>>>>> worktree-agent-a97f75f8
-  onGoLive,
-=======
   onReturnToLive,
->>>>>>> worktree-agent-a65d213c
 }: TimelinePlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState(false);
@@ -130,21 +114,9 @@ export default function TimelinePlayer({
     }
   }, [recording?.path, seekRatio]);
 
-  const goLiveButton = !isLive && onGoLive ? (
-    <button
-      className="timeline-player__go-live"
-      onClick={onGoLive}
-      aria-label="Go live"
-    >
-      <span className="timeline-player__go-live-dot" />
-      GO LIVE
-    </button>
-  ) : null;
-
   if (!recording) {
     return (
       <div className="timeline-player">
-        {goLiveButton}
         <div className="timeline-player__empty">
           <svg
             className="timeline-player__empty-icon"
@@ -171,7 +143,6 @@ export default function TimelinePlayer({
   if (error) {
     return (
       <div className="timeline-player">
-        {goLiveButton}
         <div className="timeline-player__error">
           <svg
             width="32"
@@ -195,9 +166,6 @@ export default function TimelinePlayer({
 
   return (
     <div className="timeline-player">
-<<<<<<< HEAD
-      {goLiveButton}
-=======
       {onReturnToLive && (
         <button
           className="timeline-player__return-to-live"
@@ -207,7 +175,6 @@ export default function TimelinePlayer({
           Return to Live
         </button>
       )}
->>>>>>> worktree-agent-a65d213c
       <div className="timeline-player__video-wrapper">
         <video
           ref={videoRef}
@@ -293,28 +260,6 @@ export default function TimelinePlayer({
               <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
-          {onGoLive && (
-            <button
-              className="timeline-player__go-live"
-              onClick={onGoLive}
-              aria-label="Go live"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <circle cx="12" cy="12" r="3" fill="currentColor" />
-              </svg>
-              Go Live
-            </button>
-          )}
         </div>
         <div className="timeline-player__meta-secondary">
           <span className="timeline-player__timestamp">

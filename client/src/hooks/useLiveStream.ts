@@ -4,7 +4,7 @@ import { createMsePlayer, type MsePlayer } from "../utils/msePlayer";
 export type LiveState = "idle" | "connecting" | "buffering" | "live" | "error" | "paused";
 
 export interface UseLiveStreamReturn {
-  start: (cameraId: number) => void;
+  start: (cameraId: string | number) => void;
   stop: () => void;
   pause: () => void;
   resume: () => void;
@@ -53,7 +53,7 @@ export function useLiveStream(): UseLiveStreamReturn {
   }, [cleanup]);
 
   const start = useCallback(
-    (cameraId: number) => {
+    (cameraId: string | number) => {
       // Clean up any existing connection
       cleanup();
       stoppedRef.current = false;
@@ -89,9 +89,13 @@ export function useLiveStream(): UseLiveStreamReturn {
             case "metadata": {
               if (!metadataReceived && msg.codec && videoRef.current) {
                 metadataReceived = true;
-                const player = createMsePlayer(videoRef.current, msg.codec);
-                playerRef.current = player;
                 setState("buffering");
+                createMsePlayer(videoRef.current, msg.codec).then((player) => {
+                  playerRef.current = player;
+                }).catch(() => {
+                  setState("error");
+                  setError("Failed to initialize video player");
+                });
               }
               break;
             }

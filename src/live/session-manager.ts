@@ -1,6 +1,7 @@
 import type { WebSocket } from "ws";
 import type { RingCamera } from "ring-client-api";
-import type { StreamingSession } from "ring-client-api/lib/streaming/streaming-session.js";
+
+type StreamingSession = Awaited<ReturnType<RingCamera["startLiveCall"]>>;
 import { getCameras } from "../recorder/manager.js";
 import { log } from "../logger.js";
 import { createFfmpegPipeline, type FfmpegPipeline } from "./ffmpeg-pipeline.js";

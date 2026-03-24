@@ -1,6 +1,8 @@
 import { spawn, type ChildProcess } from "child_process";
-import type { StreamingSession } from "ring-client-api/lib/streaming/streaming-session.js";
+import type { RingCamera } from "ring-client-api";
 import type { Subscription } from "rxjs";
+
+type StreamingSession = Awaited<ReturnType<RingCamera["startLiveCall"]>>;
 import { log } from "../logger.js";
 
 const DATA_TIMEOUT_MS = 10_000; // 10 seconds without data = stream failed
@@ -141,7 +143,7 @@ function startFallbackPipeline(
   const subscriptions: Subscription[] = [];
 
   // Pipe video RTP packets to ffmpeg stdin
-  const videoSub = liveCall.onVideoRtp.subscribe((rtpPacket) => {
+  const videoSub = liveCall.onVideoRtp.subscribe((rtpPacket: { serialize(): Buffer }) => {
     if (proc.stdin && !proc.stdin.destroyed) {
       proc.stdin.write(rtpPacket.serialize());
     }
@@ -149,7 +151,7 @@ function startFallbackPipeline(
   subscriptions.push(videoSub);
 
   // Pipe audio RTP packets to ffmpeg stdin
-  const audioSub = liveCall.onAudioRtp.subscribe((rtpPacket) => {
+  const audioSub = liveCall.onAudioRtp.subscribe((rtpPacket: { serialize(): Buffer }) => {
     if (proc.stdin && !proc.stdin.destroyed) {
       proc.stdin.write(rtpPacket.serialize());
     }

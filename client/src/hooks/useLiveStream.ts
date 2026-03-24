@@ -119,15 +119,17 @@ export function useLiveStream(): UseLiveStreamReturn {
         }
 
         // Binary messages (fMP4 chunks)
+        // Always append even when paused — keeps the decoder in sync
+        // so resuming doesn't produce a black screen waiting for a keyframe.
         if (event.data instanceof ArrayBuffer) {
-          if (pausedRef.current) return;
-
           if (playerRef.current) {
             playerRef.current.appendChunk(event.data);
 
             if (!receivedFirstChunkRef.current) {
               receivedFirstChunkRef.current = true;
-              setState("live");
+              if (!pausedRef.current) {
+                setState("live");
+              }
             }
           }
         }

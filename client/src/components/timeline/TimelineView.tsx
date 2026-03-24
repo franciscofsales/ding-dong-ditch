@@ -46,6 +46,12 @@ export default function TimelineView() {
 
   useKeyboardShortcuts({ recordings, selectedRecording, setSelectedRecording });
 
+  const [isLive, setIsLive] = useState(false);
+
+  const handleGoLive = useCallback(() => {
+    if (!isLive) setIsLive(true);
+  }, [isLive]);
+
   const hasRestoredRef = useRef(false);
   const hasAutoJumpedRef = useRef(false);
 
@@ -201,6 +207,8 @@ export default function TimelineView() {
         thumbnailUrl={thumbnailUrl}
         thumbnailLoading={thumbnailLoading}
         onHoverRecording={handleHoverRecording}
+        isLive={isLive}
+        onGoLive={handleGoLive}
       />
     </div>
   );

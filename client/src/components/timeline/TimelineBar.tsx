@@ -491,6 +491,16 @@ export default function TimelineBar({
     el.scrollTo({ left: targetScroll, behavior: "smooth" });
   }, [centeredRecordingId, recordings, fromMs, rangeMs, trackWidth]);
 
+  // Auto-scroll to live edge (rightmost position) when live mode is activated
+  // or when the time range changes while live
+  useEffect(() => {
+    if (!isLive) return;
+    const el = scrollRef.current;
+    if (!el) return;
+
+    el.scrollTo({ left: el.scrollWidth, behavior: "smooth" });
+  }, [isLive, timeRange]);
+
   // Handle hover enter/leave for the track area
   const handleMouseEnter = useCallback(
     (e: React.MouseEvent) => {
@@ -561,6 +571,17 @@ export default function TimelineBar({
 
   return (
     <div className="timeline-bar" ref={containerRef} onClick={handleBarClick} onKeyDown={handleKeyDown} tabIndex={0} role="region" aria-label="Recording timeline">
+      {nowPosition !== null && (
+        <button
+          className={`timeline-bar__live-indicator${isLive ? " timeline-bar__live-indicator--active" : ""}`}
+          onClick={() => onGoLive?.()}
+          aria-label="Go live"
+          type="button"
+        >
+          <span className="timeline-bar__live-dot" />
+          LIVE
+        </button>
+      )}
       <div
         className={`timeline-bar__scroll${isDragging ? " timeline-bar__scroll--dragging" : ""}${isScrubbing ? " timeline-bar__scroll--scrubbing" : ""}`}
         ref={scrollRef}

@@ -176,74 +176,81 @@ export default function TimelineView() {
     }
   }, [selectedRecording]);
 
-  // Determine what to show in the player area
+  // Render the player area.
+  // LivePlayer stays mounted (hidden) during pause so the <video> element
+  // and MSE SourceBuffer survive — avoiding black screen on resume.
+  const isLiveSessionActive = isLive && liveStream.state !== "idle";
+
   const renderPlayerArea = () => {
-    // Show LivePlayer when live is active (not paused)
-    if (isLiveActive) {
-      return (
-        <LivePlayer
-          camera={camera}
-          state={liveStream.state}
-          videoRef={liveStream.videoRef}
-          onEndLive={handleEndLive}
-        />
-      );
-    }
-
-    // No recordings and not live
-    if (recordings.length === 0 && !loading && !isLivePaused) {
-      return (
-        <div className="timeline-player">
-          <div className="timeline-player__empty">
-            <svg
-              className="timeline-player__empty-icon"
-              width="64"
-              height="64"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              <line x1="8" y1="11" x2="14" y2="11" />
-            </svg>
-            <h3 className="timeline-player__empty-title">No recordings found</h3>
-            <p className="timeline-player__empty-subtitle">
-              Try adjusting your filters or selecting a different time range
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    // Show TimelinePlayer (recording) - with Return to Live when paused
     return (
-      <TimelinePlayer
-        recording={selectedRecording}
-        seekRatio={seekRatio}
-        onPrevious={() => {
-          const idx = recordings.findIndex((r) => r.id === selectedRecording?.id);
-          if (idx > 0) handleSelectRecording(recordings[idx - 1]);
-        }}
-        onNext={() => {
-          const idx = recordings.findIndex((r) => r.id === selectedRecording?.id);
-          if (idx >= 0 && idx < recordings.length - 1) handleSelectRecording(recordings[idx + 1]);
-        }}
-        onDelete={async (rec) => {
-          try {
-            const [date, cam, file] = rec.path.split("/");
-            await fetch(`/api/recordings/${date}/${cam}/${file}`, { method: "DELETE" });
-            handleSelectRecording(null);
-            reload();
-          } catch {
-            // Error handling is in the player component
-          }
-        }}
-        onReturnToLive={isLivePaused ? handleReturnToLive : undefined}
-      />
+      <>
+        {/* LivePlayer: always mounted when a live session exists, hidden when paused */}
+        {isLiveSessionActive && (
+          <div style={isLivePaused ? { display: "none" } : undefined}>
+            <LivePlayer
+              camera={camera}
+              state={liveStream.state}
+              videoRef={liveStream.videoRef}
+              onEndLive={handleEndLive}
+            />
+          </div>
+        )}
+
+        {/* Recording player or empty state: shown when not live or when live is paused */}
+        {(!isLiveSessionActive || isLivePaused) && (
+          <>
+            {recordings.length === 0 && !loading && !isLivePaused ? (
+              <div className="timeline-player">
+                <div className="timeline-player__empty">
+                  <svg
+                    className="timeline-player__empty-icon"
+                    width="64"
+                    height="64"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <line x1="8" y1="11" x2="14" y2="11" />
+                  </svg>
+                  <h3 className="timeline-player__empty-title">No recordings found</h3>
+                  <p className="timeline-player__empty-subtitle">
+                    Try adjusting your filters or selecting a different time range
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <TimelinePlayer
+                recording={selectedRecording}
+                seekRatio={seekRatio}
+                onPrevious={() => {
+                  const idx = recordings.findIndex((r) => r.id === selectedRecording?.id);
+                  if (idx > 0) handleSelectRecording(recordings[idx - 1]);
+                }}
+                onNext={() => {
+                  const idx = recordings.findIndex((r) => r.id === selectedRecording?.id);
+                  if (idx >= 0 && idx < recordings.length - 1) handleSelectRecording(recordings[idx + 1]);
+                }}
+                onDelete={async (rec) => {
+                  try {
+                    const [date, cam, file] = rec.path.split("/");
+                    await fetch(`/api/recordings/${date}/${cam}/${file}`, { method: "DELETE" });
+                    handleSelectRecording(null);
+                    reload();
+                  } catch {
+                    // Error handling is in the player component
+                  }
+                }}
+                onReturnToLive={isLivePaused ? handleReturnToLive : undefined}
+              />
+            )}
+          </>
+        )}
+      </>
     );
   };
 

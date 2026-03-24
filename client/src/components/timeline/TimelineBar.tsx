@@ -27,6 +27,10 @@ interface TimelineBarProps {
   thumbnailLoading?: boolean;
   /** Called when hover position changes over a recording */
   onHoverRecording?: (recording: TimelineRecording | null, offsetRatio: number) => void;
+  /** Whether the live camera view is currently active */
+  isLive?: boolean;
+  /** Callback when the LIVE indicator is clicked */
+  onGoLive?: () => void;
 }
 
 interface TimeMarker {
@@ -164,6 +168,8 @@ export default function TimelineBar({
   thumbnailUrl,
   thumbnailLoading,
   onHoverRecording,
+  isLive,
+  onGoLive,
 }: TimelineBarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -653,6 +659,19 @@ export default function TimelineBar({
             <div className="timeline-bar__scrubber" style={{ left: `${pos}%` }} />
           );
         })()}
+
+        {/* LIVE indicator */}
+        <button
+          className={`timeline-bar__live-indicator${isLive ? " timeline-bar__live-indicator--active" : ""}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onGoLive?.();
+          }}
+          aria-label={isLive ? "Viewing live" : "Go to live view"}
+        >
+          <span className="timeline-bar__live-dot" />
+          LIVE
+        </button>
       </div>
       </div>
     </div>

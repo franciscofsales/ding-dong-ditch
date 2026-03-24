@@ -240,8 +240,60 @@
   opacity: 0.5;
 }
 
-  pointer-events: none;
-  opacity: 0.5;
+/* LIVE indicator */
+.timeline-bar__live-indicator {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(220, 38, 38, 0.15);
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  z-index: 10;
+  pointer-events: auto;
+  animation: live-pulse 2s ease-in-out infinite;
+  transition: background var(--duration-fast) var(--ease-default),
+              color var(--duration-fast) var(--ease-default);
+}
+
+.timeline-bar__live-indicator:hover {
+  background: rgba(220, 38, 38, 0.25);
+}
+
+.timeline-bar__live-indicator--active {
+  background: #ef4444;
+  color: #fff;
+  animation: none;
+}
+
+.timeline-bar__live-indicator--active:hover {
+  background: #dc2626;
+}
+
+.timeline-bar__live-indicator--active .timeline-bar__live-dot {
+  background: #fff;
+}
+
+.timeline-bar__live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 /* Responsive: compact bar on narrow screens */

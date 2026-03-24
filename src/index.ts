@@ -11,6 +11,7 @@ import { initStorage } from "./storage/index.js";
 import { initMqtt } from "./mqtt/publisher.js";
 import { initDb, closeDb } from "./db/index.js";
 import { log } from "./logger.js";
+import { handleLiveConnection } from "./api/live.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
@@ -93,7 +94,7 @@ app.get("*", (_req: Request, res: Response) => {
 const server = http.createServer(app);
 
 // WebSocket server for live camera streams
-const LIVE_PATH_RE = /^\/api\/cameras\/[^/]+\/live$/;
+const LIVE_PATH_RE = /^\/api\/cameras\/[^/]+\/live(\?.*)?$/;
 export const wss = new WebSocketServer({ noServer: true });
 
 server.on("upgrade", (request, socket, head) => {
@@ -104,6 +105,10 @@ server.on("upgrade", (request, socket, head) => {
   } else {
     socket.destroy();
   }
+});
+
+wss.on("connection", (ws, request) => {
+  handleLiveConnection(ws, request as http.IncomingMessage, AUTH_TOKEN);
 });
 
 server.listen(PORT, () => {

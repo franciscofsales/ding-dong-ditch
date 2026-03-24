@@ -9,6 +9,8 @@ interface TimelinePlayerProps {
   onPrevious: () => void;
   onNext: () => void;
   onDelete: (recording: TimelineRecording) => void;
+  /** When provided, shows a "Return to Live" button (live stream is paused) */
+  onReturnToLive?: () => void;
 }
 
 function formatTimestamp(ts: string): string {
@@ -73,6 +75,7 @@ export default function TimelinePlayer({
   onPrevious,
   onNext,
   onDelete,
+  onReturnToLive,
 }: TimelinePlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState(false);
@@ -163,6 +166,15 @@ export default function TimelinePlayer({
 
   return (
     <div className="timeline-player">
+      {onReturnToLive && (
+        <button
+          className="timeline-player__return-to-live"
+          onClick={onReturnToLive}
+        >
+          <span className="timeline-player__return-to-live-dot" />
+          Return to Live
+        </button>
+      )}
       <div className="timeline-player__video-wrapper">
         <video
           ref={videoRef}

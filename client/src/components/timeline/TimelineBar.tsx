@@ -27,6 +27,10 @@ interface TimelineBarProps {
   thumbnailLoading?: boolean;
   /** Called when hover position changes over a recording */
   onHoverRecording?: (recording: TimelineRecording | null, offsetRatio: number) => void;
+  /** Whether the live stream is currently active */
+  isLive?: boolean;
+  /** Called to start the live stream */
+  onGoLive?: () => void;
 }
 
 interface TimeMarker {
@@ -164,6 +168,8 @@ export default function TimelineBar({
   thumbnailUrl,
   thumbnailLoading,
   onHoverRecording,
+  isLive: _isLive,
+  onGoLive: _onGoLive,
 }: TimelineBarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);

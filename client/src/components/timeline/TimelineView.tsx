@@ -3,11 +3,13 @@ import { useTimeline } from "../../hooks/useTimeline";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import { useThumbnailVideo } from "../../hooks/useThumbnailVideo";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { useLiveStream } from "../../hooks/useLiveStream";
 import { captureFrame } from "../../utils/captureFrame";
 import { ThumbnailCache } from "../../utils/thumbnailCache";
 import type { TimelineRecording } from "./TimelineBar";
 import TimelineTopBar from "./TimelineTopBar";
 import TimelinePlayer from "./TimelinePlayer";
+import LivePlayer from "./LivePlayer";
 import "./TimelinePlayer.css";
 import TimelineBar from "./TimelineBar";
 
@@ -43,6 +45,56 @@ export default function TimelineView() {
     error,
     reload,
   } = useTimeline();
+
+  const liveStream = useLiveStream();
+
+  // Track whether the user has explicitly started a live session
+  const [isLive, setIsLive] = useState(false);
+
+  // Derived display states (Task 4.4)
+  const isLiveActive =
+    isLive &&
+    ["connecting", "buffering", "live"].includes(liveStream.state);
+  const isLivePaused =
+    isLive && liveStream.state === "paused";
+
+  // Start live stream
+  const handleGoLive = useCallback(() => {
+    if (!camera) return;
+    setIsLive(true);
+    setSelectedRecording(null);
+    liveStream.start(camera);
+  }, [camera, liveStream, setSelectedRecording]);
+
+  // End live stream
+  const handleEndLive = useCallback(() => {
+    setIsLive(false);
+    liveStream.stop();
+  }, [liveStream]);
+
+  // Pause live on recording select (Task 4.1)
+  const handleSelectRecording = useCallback(
+    (recording: TimelineRecording | null, ratio?: number) => {
+      if (recording && isLive && ["connecting", "buffering", "live"].includes(liveStream.state)) {
+        liveStream.pause();
+      }
+      setSelectedRecording(recording, ratio);
+    },
+    [isLive, liveStream, setSelectedRecording],
+  );
+
+  // Return to live handler with stale session handling (Task 4.2 + 4.3)
+  const handleReturnToLive = useCallback(() => {
+    setSelectedRecording(null);
+    // If the WS died while we were paused, start a new session
+    if (liveStream.state === "error" || liveStream.state === "idle") {
+      if (camera) {
+        liveStream.start(camera);
+      }
+    } else {
+      liveStream.resume();
+    }
+  }, [camera, liveStream, setSelectedRecording]);
 
   useKeyboardShortcuts({ recordings, selectedRecording, setSelectedRecording });
 
@@ -130,21 +182,22 @@ export default function TimelineView() {
     }
   }, [selectedRecording]);
 
-  return (
-    <div className="timeline-view">
-      <TimelineTopBar
-        cameras={cameras}
-        selectedCamera={camera}
-        onCameraChange={setCamera}
-        timePreset={timePreset}
-        onTimePresetChange={setTimePreset}
-        onCustomTimeRange={setCustomTimeRange}
-        timeRange={timeRange}
-        eventType={eventType as "" | "doorbell" | "motion"}
-        onEventTypeChange={setEventType}
-        counts={counts}
-      />
-      {recordings.length === 0 && !loading ? (
+  // Determine what to show in the player area
+  const renderPlayerArea = () => {
+    // Show LivePlayer when live is active (not paused)
+    if (isLiveActive) {
+      return (
+        <LivePlayer
+          camera={camera}
+          state={liveStream.state}
+          onEndLive={handleEndLive}
+        />
+      );
+    }
+
+    // No recordings and not live
+    if (recordings.length === 0 && !loading && !isLivePaused) {
+      return (
         <div className="timeline-player">
           <div className="timeline-player__empty">
             <svg
@@ -168,39 +221,63 @@ export default function TimelineView() {
             </p>
           </div>
         </div>
-      ) : (
-        <TimelinePlayer
-          recording={selectedRecording}
-          seekRatio={seekRatio}
-          onPrevious={() => {
-            const idx = recordings.findIndex((r) => r.id === selectedRecording?.id);
-            if (idx > 0) setSelectedRecording(recordings[idx - 1]);
-          }}
-          onNext={() => {
-            const idx = recordings.findIndex((r) => r.id === selectedRecording?.id);
-            if (idx >= 0 && idx < recordings.length - 1) setSelectedRecording(recordings[idx + 1]);
-          }}
-          onDelete={async (rec) => {
-            try {
-              const [date, cam, file] = rec.path.split("/");
-              await fetch(`/api/recordings/${date}/${cam}/${file}`, { method: "DELETE" });
-              setSelectedRecording(null);
-              reload();
-            } catch {
-              // Error handling is in the player component
-            }
-          }}
-        />
-      )}
+      );
+    }
+
+    // Show TimelinePlayer (recording) - with Return to Live when paused
+    return (
+      <TimelinePlayer
+        recording={selectedRecording}
+        seekRatio={seekRatio}
+        onPrevious={() => {
+          const idx = recordings.findIndex((r) => r.id === selectedRecording?.id);
+          if (idx > 0) handleSelectRecording(recordings[idx - 1]);
+        }}
+        onNext={() => {
+          const idx = recordings.findIndex((r) => r.id === selectedRecording?.id);
+          if (idx >= 0 && idx < recordings.length - 1) handleSelectRecording(recordings[idx + 1]);
+        }}
+        onDelete={async (rec) => {
+          try {
+            const [date, cam, file] = rec.path.split("/");
+            await fetch(`/api/recordings/${date}/${cam}/${file}`, { method: "DELETE" });
+            handleSelectRecording(null);
+            reload();
+          } catch {
+            // Error handling is in the player component
+          }
+        }}
+        onReturnToLive={isLivePaused ? handleReturnToLive : undefined}
+      />
+    );
+  };
+
+  return (
+    <div className="timeline-view">
+      <TimelineTopBar
+        cameras={cameras}
+        selectedCamera={camera}
+        onCameraChange={setCamera}
+        timePreset={timePreset}
+        onTimePresetChange={setTimePreset}
+        onCustomTimeRange={setCustomTimeRange}
+        timeRange={timeRange}
+        eventType={eventType as "" | "doorbell" | "motion"}
+        onEventTypeChange={setEventType}
+        counts={counts}
+      />
+      {renderPlayerArea()}
       <TimelineBar
         timeRange={timeRange}
         recordings={recordings}
         selectedRecordingId={selectedRecording?.id ?? null}
-        onSelect={setSelectedRecording}
+        onSelect={handleSelectRecording}
         centeredRecordingId={selectedRecording?.id ?? null}
         thumbnailUrl={thumbnailUrl}
         thumbnailLoading={thumbnailLoading}
         onHoverRecording={handleHoverRecording}
+        isLive={isLiveActive}
+        onGoLive={handleGoLive}
       />
     </div>
   );

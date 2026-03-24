@@ -9,6 +9,8 @@ interface TimelinePlayerProps {
   onPrevious: () => void;
   onNext: () => void;
   onDelete: (recording: TimelineRecording) => void;
+  isLive?: boolean;
+  onGoLive?: () => void;
 }
 
 function formatTimestamp(ts: string): string {
@@ -73,6 +75,8 @@ export default function TimelinePlayer({
   onPrevious,
   onNext,
   onDelete,
+  isLive = false,
+  onGoLive,
 }: TimelinePlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState(false);
@@ -111,9 +115,21 @@ export default function TimelinePlayer({
     }
   }, [recording?.path, seekRatio]);
 
+  const goLiveButton = !isLive && onGoLive ? (
+    <button
+      className="timeline-player__go-live"
+      onClick={onGoLive}
+      aria-label="Go live"
+    >
+      <span className="timeline-player__go-live-dot" />
+      GO LIVE
+    </button>
+  ) : null;
+
   if (!recording) {
     return (
       <div className="timeline-player">
+        {goLiveButton}
         <div className="timeline-player__empty">
           <svg
             className="timeline-player__empty-icon"
@@ -140,6 +156,7 @@ export default function TimelinePlayer({
   if (error) {
     return (
       <div className="timeline-player">
+        {goLiveButton}
         <div className="timeline-player__error">
           <svg
             width="32"
@@ -163,6 +180,7 @@ export default function TimelinePlayer({
 
   return (
     <div className="timeline-player">
+      {goLiveButton}
       <div className="timeline-player__video-wrapper">
         <video
           ref={videoRef}

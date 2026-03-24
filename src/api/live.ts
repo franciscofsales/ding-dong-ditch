@@ -32,13 +32,14 @@ function validateAuth(
 }
 
 /**
- * Extract camera ID from the WebSocket URL path.
+ * Extract camera identifier from the WebSocket URL path.
  * Expected path: /api/cameras/:id/live
+ * The :id can be a numeric Ring camera ID or a camera name (e.g., "Front_Door").
  */
-function parseCameraId(url: string): number | null {
-  const match = url.match(/\/api\/cameras\/(\d+)\/live/);
+function parseCameraId(url: string): string | null {
+  const match = url.match(/\/api\/cameras\/([^/?]+)\/live/);
   if (!match) return null;
-  return parseInt(match[1], 10);
+  return decodeURIComponent(match[1]);
 }
 
 /**
@@ -57,11 +58,18 @@ export function handleLiveConnection(
     return;
   }
 
-  // Parse camera ID from URL
-  const cameraId = parseCameraId(request.url ?? "");
-  if (cameraId === null) {
+  // Parse camera identifier from URL and resolve to numeric ID
+  const cameraIdentifier = parseCameraId(request.url ?? "");
+  if (cameraIdentifier === null) {
     ws.send(JSON.stringify({ type: "error", message: "Invalid camera ID" }));
     ws.close(4002, "Invalid camera ID");
+    return;
+  }
+
+  const cameraId = liveSessionManager.resolveCamera(cameraIdentifier);
+  if (cameraId === null) {
+    ws.send(JSON.stringify({ type: "error", message: `Camera not found: ${cameraIdentifier}` }));
+    ws.close(4002, "Camera not found");
     return;
   }
 

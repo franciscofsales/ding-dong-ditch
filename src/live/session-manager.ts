@@ -288,6 +288,29 @@ export class LiveSessionManager {
   private findCamera(cameraId: number): RingCamera | undefined {
     return getCameras().find((c) => c.id === cameraId);
   }
+
+  /**
+   * Resolve a camera identifier (numeric ID or name) to a numeric Ring camera ID.
+   * Returns null if no matching camera is found.
+   */
+  resolveCamera(identifier: string | number): number | null {
+    const cameras = getCameras();
+
+    // Try numeric ID first
+    const numId = typeof identifier === "number" ? identifier : parseInt(identifier, 10);
+    if (!isNaN(numId) && cameras.some((c) => c.id === numId)) {
+      return numId;
+    }
+
+    // Try by name (camera names use underscores for spaces in paths)
+    const name = String(identifier).replace(/_/g, " ");
+    const byName = cameras.find(
+      (c) => c.name === name || c.name === String(identifier),
+    );
+    if (byName) return byName.id;
+
+    return null;
+  }
 }
 
 export const liveSessionManager = new LiveSessionManager();

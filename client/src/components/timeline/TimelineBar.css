@@ -244,6 +244,54 @@
   opacity: 0.5;
 }
 
+/* LIVE indicator */
+.timeline-bar__live-indicator {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-2);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-default);
+  color: var(--color-fg-muted);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-default),
+              border-color var(--duration-fast) var(--ease-default);
+}
+
+.timeline-bar__live-indicator:hover {
+  color: var(--color-danger-fg);
+  border-color: var(--color-danger-fg);
+}
+
+.timeline-bar__live-indicator--active {
+  color: var(--color-danger-fg);
+  border-color: var(--color-danger-fg);
+}
+
+.timeline-bar__live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.timeline-bar__live-indicator--active .timeline-bar__live-dot {
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* Responsive: compact bar on narrow screens */
 @media (max-width: 768px) {
   .timeline-bar {

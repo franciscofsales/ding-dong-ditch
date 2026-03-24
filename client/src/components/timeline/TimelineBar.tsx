@@ -571,17 +571,6 @@ export default function TimelineBar({
 
   return (
     <div className="timeline-bar" ref={containerRef} onClick={handleBarClick} onKeyDown={handleKeyDown} tabIndex={0} role="region" aria-label="Recording timeline">
-      {nowPosition !== null && (
-        <button
-          className={`timeline-bar__live-indicator${isLive ? " timeline-bar__live-indicator--active" : ""}`}
-          onClick={() => onGoLive?.()}
-          aria-label="Go live"
-          type="button"
-        >
-          <span className="timeline-bar__live-dot" />
-          LIVE
-        </button>
-      )}
       <div
         className={`timeline-bar__scroll${isDragging ? " timeline-bar__scroll--dragging" : ""}${isScrubbing ? " timeline-bar__scroll--scrubbing" : ""}`}
         ref={scrollRef}
@@ -681,20 +670,20 @@ export default function TimelineBar({
           );
         })()}
 
-        {/* LIVE indicator */}
-        <button
-          className={`timeline-bar__live-indicator${isLive ? " timeline-bar__live-indicator--active" : ""}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onGoLive?.();
-          }}
-          aria-label={isLive ? "Viewing live" : "Go to live view"}
-        >
-          <span className="timeline-bar__live-dot" />
-          LIVE
-        </button>
       </div>
       </div>
+      <button
+        className={`timeline-bar__live-indicator${isLive ? " timeline-bar__live-indicator--active" : ""}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onGoLive?.();
+        }}
+        aria-label={isLive ? "Viewing live" : "Go to live view"}
+        type="button"
+      >
+        <span className="timeline-bar__live-dot" />
+        LIVE
+      </button>
     </div>
   );
 }

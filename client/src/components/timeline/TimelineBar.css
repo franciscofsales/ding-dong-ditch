@@ -9,11 +9,15 @@
   z-index: 100;
   padding: var(--space-2) var(--space-4);
   user-select: none;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-3);
 }
 
 .timeline-bar__scroll {
   position: relative;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
@@ -242,14 +246,12 @@
 
 /* LIVE indicator */
 .timeline-bar__live-indicator {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
+  flex-shrink: 0;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 4px 12px;
   border: none;
   border-radius: 9999px;
   background: rgba(220, 38, 38, 0.15);
@@ -258,8 +260,6 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   cursor: pointer;
-  z-index: 10;
-  pointer-events: auto;
   animation: live-pulse 2s ease-in-out infinite;
   transition: background var(--duration-fast) var(--ease-default),
               color var(--duration-fast) var(--ease-default);

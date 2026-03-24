@@ -117,14 +117,8 @@ export default function TimelineView() {
     }
   }, [loading, recordings, setSelectedRecording]);
 
-  // Auto-select latest recording on first data load
-  useEffect(() => {
-    if (hasAutoJumpedRef.current || loading || recordings.length === 0) return;
-    if (!latestRecording) return;
-
-    hasAutoJumpedRef.current = true;
-    setSelectedRecording(latestRecording);
-  }, [loading, recordings, latestRecording, setSelectedRecording]);
+  // No auto-select on initial load — user lands on empty player
+  // with Go Live button visible. They can click a recording or go live.
 
   // Thumbnail preview state
   const [hoverRecording, setHoverRecording] = useState<{ recording: TimelineRecording; offsetRatio: number } | null>(null);

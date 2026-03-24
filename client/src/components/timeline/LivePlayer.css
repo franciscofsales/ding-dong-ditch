@@ -48,12 +48,24 @@
   position: absolute;
   top: var(--space-3);
   right: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
   font-size: var(--text-sm);
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   font-weight: var(--font-weight-semibold);
   text-transform: capitalize;
   z-index: 1;
+}
+
+.live-player__timestamp {
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
 }
 
 .live-player__video {

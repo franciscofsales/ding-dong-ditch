@@ -1,5 +1,15 @@
+import { useState, useEffect } from "react";
 import type { LiveState } from "../../hooks/useLiveStream";
 import "./LivePlayer.css";
+
+function useCurrentTime() {
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+  return time;
+}
 
 interface LivePlayerProps {
   camera: string;
@@ -15,7 +25,13 @@ interface LivePlayerProps {
  * message arrives over the WebSocket.
  */
 export default function LivePlayer({ camera, state, videoRef, onEndLive }: LivePlayerProps) {
+  const currentTime = useCurrentTime();
   const showOverlay = state === "connecting" || state === "buffering";
+  const timeString = currentTime.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 
   return (
     <div className="timeline-player live-player">
@@ -49,7 +65,8 @@ export default function LivePlayer({ camera, state, videoRef, onEndLive }: LiveP
 
         {state === "live" && (
           <div className="live-player__camera-info">
-            {camera.replace(/_/g, " ")}
+            <span>{camera.replace(/_/g, " ")}</span>
+            <span className="live-player__timestamp">{timeString}</span>
           </div>
         )}
 

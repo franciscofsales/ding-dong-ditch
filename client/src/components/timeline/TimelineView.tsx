@@ -190,6 +190,7 @@ export default function TimelineView() {
         <LivePlayer
           camera={camera}
           state={liveStream.state}
+          videoRef={liveStream.videoRef}
           onEndLive={handleEndLive}
         />
       );

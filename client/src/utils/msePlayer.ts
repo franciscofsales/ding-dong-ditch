@@ -46,6 +46,12 @@ export function createMsePlayer(
         return;
       }
 
+      // Guard: SourceBuffer may have been removed from MediaSource
+      if (mediaSource.readyState !== "open") {
+        queue.length = 0;
+        return;
+      }
+
       const chunk = queue.shift()!;
       try {
         sourceBuffer.appendBuffer(chunk);
@@ -54,8 +60,12 @@ export function createMsePlayer(
           trimBuffer();
           // Re-queue the chunk so it will be retried after the trim completes.
           queue.unshift(chunk);
+        } else if (err instanceof DOMException && err.name === "InvalidStateError") {
+          // SourceBuffer removed from MediaSource — stop appending
+          queue.length = 0;
         } else {
-          throw err;
+          // Unknown error — clear queue to avoid repeated failures
+          queue.length = 0;
         }
       }
     }
@@ -107,7 +117,7 @@ export function createMsePlayer(
     }
 
     function appendChunk(data: ArrayBuffer): void {
-      if (destroyed) {
+      if (destroyed || mediaSource.readyState !== "open") {
         return;
       }
 

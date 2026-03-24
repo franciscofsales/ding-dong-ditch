@@ -1,0 +1,203 @@
+.live-player {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.live-player__video-wrapper {
+  position: relative;
+  background: #000;
+  min-height: 320px;
+}
+
+.live-player__video-wrapper video {
+  display: block;
+  width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+}
+
+.live-player__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.live-player__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--color-danger-fg);
+  color: #fff;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.live-player__badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: #fff;
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.live-player__info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: var(--text-sm);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.live-player__camera-name {
+  font-weight: var(--font-weight-semibold);
+  text-transform: capitalize;
+}
+
+.live-player__time {
+  font-size: var(--text-xs);
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Loading state */
+.live-player__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  gap: var(--space-3);
+  color: var(--color-fg-muted);
+  padding: var(--space-6);
+}
+
+.live-player__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border-default);
+  border-top-color: var(--color-fg-accent);
+  border-radius: var(--radius-full);
+  animation: live-spin 0.8s linear infinite;
+}
+
+@keyframes live-spin {
+  to { transform: rotate(360deg); }
+}
+
+.live-player__loading-text {
+  font-size: var(--text-base);
+}
+
+/* Error state */
+.live-player__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 320px;
+  color: var(--color-danger-fg);
+  font-size: var(--text-base);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.live-player__error svg {
+  opacity: 0.7;
+}
+
+.live-player__error-message {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+}
+
+.live-player__error-sub {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+.live-player__retry-btn {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-fg-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+.live-player__retry-btn:hover {
+  opacity: 0.85;
+}
+
+.live-player__retry-btn:focus-visible {
+  outline: 2px solid var(--color-fg-accent);
+  outline-offset: 2px;
+}
+
+/* Bottom bar with End Live button */
+.live-player__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border-default);
+  background: var(--color-bg-subtle);
+}
+
+.live-player__status-text {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+.live-player__end-btn {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-danger-fg);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+.live-player__end-btn:hover {
+  opacity: 0.85;
+}
+
+.live-player__end-btn:focus-visible {
+  outline: 2px solid var(--color-danger-fg);
+  outline-offset: 2px;
+}
+
+/* Paused state dimming */
+.live-player__video-wrapper--paused video {
+  opacity: 0.5;
+}

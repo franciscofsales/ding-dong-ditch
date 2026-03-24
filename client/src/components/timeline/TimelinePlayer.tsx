@@ -9,6 +9,7 @@ interface TimelinePlayerProps {
   onPrevious: () => void;
   onNext: () => void;
   onDelete: (recording: TimelineRecording) => void;
+  onGoLive?: () => void;
 }
 
 function formatTimestamp(ts: string): string {
@@ -73,6 +74,7 @@ export default function TimelinePlayer({
   onPrevious,
   onNext,
   onDelete,
+  onGoLive,
 }: TimelinePlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState(false);
@@ -248,6 +250,28 @@ export default function TimelinePlayer({
               <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
+          {onGoLive && (
+            <button
+              className="timeline-player__go-live"
+              onClick={onGoLive}
+              aria-label="Go live"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="3" fill="currentColor" />
+              </svg>
+              Go Live
+            </button>
+          )}
         </div>
         <div className="timeline-player__meta-secondary">
           <span className="timeline-player__timestamp">

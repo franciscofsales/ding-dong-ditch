@@ -3,11 +3,13 @@ import { useTimeline } from "../../hooks/useTimeline";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import { useThumbnailVideo } from "../../hooks/useThumbnailVideo";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { useLiveStream } from "../../hooks/useLiveStream";
 import { captureFrame } from "../../utils/captureFrame";
 import { ThumbnailCache } from "../../utils/thumbnailCache";
 import type { TimelineRecording } from "./TimelineBar";
 import TimelineTopBar from "./TimelineTopBar";
 import TimelinePlayer from "./TimelinePlayer";
+import LivePlayer from "./LivePlayer";
 import "./TimelinePlayer.css";
 import TimelineBar from "./TimelineBar";
 
@@ -45,6 +47,30 @@ export default function TimelineView() {
   } = useTimeline();
 
   useKeyboardShortcuts({ recordings, selectedRecording, setSelectedRecording });
+
+  const liveStream = useLiveStream();
+  const [isLive, setIsLive] = useState(false);
+
+  const handleGoLive = useCallback(() => {
+    if (!camera) return;
+    setIsLive(true);
+    liveStream.start(camera);
+  }, [camera, liveStream]);
+
+  const handleEndLive = useCallback(() => {
+    liveStream.stop();
+    setIsLive(false);
+  }, [liveStream]);
+
+  const handleRetryLive = useCallback(() => {
+    if (!camera) return;
+    liveStream.start(camera);
+  }, [camera, liveStream]);
+
+  /**
+   * Extract a display-friendly camera name from the camera ID.
+   */
+  const cameraDisplayName = camera ? camera.replace(/_/g, " ") : "Camera";
 
   const hasRestoredRef = useRef(false);
   const hasAutoJumpedRef = useRef(false);
@@ -144,7 +170,16 @@ export default function TimelineView() {
         onEventTypeChange={setEventType}
         counts={counts}
       />
-      {recordings.length === 0 && !loading ? (
+      {isLive && liveStream.state !== "idle" ? (
+        <LivePlayer
+          cameraName={cameraDisplayName}
+          liveState={liveStream.state}
+          error={liveStream.error}
+          videoRef={liveStream.videoRef}
+          onEndLive={handleEndLive}
+          onRetry={handleRetryLive}
+        />
+      ) : recordings.length === 0 && !loading ? (
         <div className="timeline-player">
           <div className="timeline-player__empty">
             <svg
@@ -190,6 +225,7 @@ export default function TimelineView() {
               // Error handling is in the player component
             }
           }}
+          onGoLive={camera ? handleGoLive : undefined}
         />
       )}
       <TimelineBar

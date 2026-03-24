@@ -240,3 +240,28 @@
 .timeline-player__time-wall {
   color: var(--color-fg-accent);
 }
+
+.timeline-player__go-live {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: var(--space-2);
+  padding: 2px var(--space-2);
+  background: var(--color-danger-fg);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+
+.timeline-player__go-live:hover {
+  opacity: 0.85;
+}
+
+.timeline-player__go-live:focus-visible {
+  outline: 2px solid var(--color-danger-fg);
+  outline-offset: 2px;
+}

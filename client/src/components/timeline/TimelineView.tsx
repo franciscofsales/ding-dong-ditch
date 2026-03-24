@@ -177,16 +177,30 @@ export default function TimelineView() {
   }, [selectedRecording]);
 
   // Render the player area.
-  // LivePlayer stays mounted (hidden) during pause so the <video> element
-  // and MSE SourceBuffer survive — avoiding black screen on resume.
+  // Both players are rendered in a stacking context. LivePlayer stays mounted
+  // behind the recording player during pause — using a tiny 1x1px size with
+  // overflow hidden instead of display:none, because display:none tears down
+  // the browser media pipeline and causes black screens on resume.
   const isLiveSessionActive = isLive && liveStream.state !== "idle";
 
   const renderPlayerArea = () => {
     return (
-      <>
-        {/* LivePlayer: always mounted when a live session exists, hidden when paused */}
+      <div className="timeline-view__player-stack">
+        {/* LivePlayer: always mounted when a live session exists.
+            When paused: shrunk to 1x1px (not display:none) so browser
+            keeps the media pipeline alive. */}
         {isLiveSessionActive && (
-          <div style={isLivePaused ? { display: "none" } : undefined}>
+          <div
+            className="timeline-view__player-layer"
+            style={isLivePaused ? {
+              position: "absolute",
+              width: "1px",
+              height: "1px",
+              overflow: "hidden",
+              opacity: 0,
+              pointerEvents: "none",
+            } : undefined}
+          >
             <LivePlayer
               camera={camera}
               state={liveStream.state}
@@ -196,9 +210,9 @@ export default function TimelineView() {
           </div>
         )}
 
-        {/* Recording player or empty state: shown when not live or when live is paused */}
-        {(!isLiveSessionActive || isLivePaused) && (
-          <>
+        {/* Recording player or empty state: shown when not actively live */}
+        {(!isLiveActive || isLivePaused) && (
+          <div className="timeline-view__player-layer">
             {recordings.length === 0 && !loading && !isLivePaused ? (
               <div className="timeline-player">
                 <div className="timeline-player__empty">
@@ -248,9 +262,9 @@ export default function TimelineView() {
                 onReturnToLive={isLivePaused ? handleReturnToLive : undefined}
               />
             )}
-          </>
+          </div>
         )}
-      </>
+      </div>
     );
   };
 

@@ -27,9 +27,15 @@ interface TimelineBarProps {
   thumbnailLoading?: boolean;
   /** Called when hover position changes over a recording */
   onHoverRecording?: (recording: TimelineRecording | null, offsetRatio: number) => void;
+<<<<<<< HEAD
   /** Whether the live camera view is currently active */
   isLive?: boolean;
   /** Callback when the LIVE indicator is clicked */
+=======
+  /** Whether the live stream is currently active */
+  isLive?: boolean;
+  /** Called to start the live stream */
+>>>>>>> worktree-agent-a65d213c
   onGoLive?: () => void;
 }
 
@@ -168,8 +174,13 @@ export default function TimelineBar({
   thumbnailUrl,
   thumbnailLoading,
   onHoverRecording,
+<<<<<<< HEAD
   isLive,
   onGoLive,
+=======
+  isLive: _isLive,
+  onGoLive: _onGoLive,
+>>>>>>> worktree-agent-a65d213c
 }: TimelineBarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);

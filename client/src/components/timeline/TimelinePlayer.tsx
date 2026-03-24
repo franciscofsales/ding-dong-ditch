@@ -10,10 +10,15 @@ interface TimelinePlayerProps {
   onNext: () => void;
   onDelete: (recording: TimelineRecording) => void;
 <<<<<<< HEAD
+<<<<<<< HEAD
   isLive?: boolean;
 =======
 >>>>>>> worktree-agent-a97f75f8
   onGoLive?: () => void;
+=======
+  /** When provided, shows a "Return to Live" button (live stream is paused) */
+  onReturnToLive?: () => void;
+>>>>>>> worktree-agent-a65d213c
 }
 
 function formatTimestamp(ts: string): string {
@@ -79,10 +84,14 @@ export default function TimelinePlayer({
   onNext,
   onDelete,
 <<<<<<< HEAD
+<<<<<<< HEAD
   isLive = false,
 =======
 >>>>>>> worktree-agent-a97f75f8
   onGoLive,
+=======
+  onReturnToLive,
+>>>>>>> worktree-agent-a65d213c
 }: TimelinePlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState(false);
@@ -186,7 +195,19 @@ export default function TimelinePlayer({
 
   return (
     <div className="timeline-player">
+<<<<<<< HEAD
       {goLiveButton}
+=======
+      {onReturnToLive && (
+        <button
+          className="timeline-player__return-to-live"
+          onClick={onReturnToLive}
+        >
+          <span className="timeline-player__return-to-live-dot" />
+          Return to Live
+        </button>
+      )}
+>>>>>>> worktree-agent-a65d213c
       <div className="timeline-player__video-wrapper">
         <video
           ref={videoRef}

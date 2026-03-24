@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { getCameras, restart } from "../recorder/manager.js";
 import { getCameraConfig, setCameraConfig } from "../config/store.js";
-import { getSession } from "../live/session-manager.js";
+import { liveSessionManager } from "../live/session-manager.js";
 import type { CameraConfig } from "../types.js";
 
 const router = Router();
@@ -39,8 +39,8 @@ router.put("/:id/config", async (req: Request, res: Response) => {
 
 // Live stream status for a camera
 router.get("/:id/live/status", (req: Request, res: Response) => {
-  const cameraId = req.params.id as string;
-  const session = getSession(cameraId);
+  const cameraId = Number(req.params.id);
+  const session = liveSessionManager.getSession(cameraId);
   if (session) {
     return res.json({
       active: true,
